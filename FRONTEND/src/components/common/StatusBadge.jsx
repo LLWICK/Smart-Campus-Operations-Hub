@@ -8,10 +8,18 @@ export default function StatusBadge({ status, type = 'booking' }) {
   return (
     <span
       className={clsx(
-        'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold',
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide transition-colors',
         config.color
       )}
     >
+      <span
+        className={clsx('w-1.5 h-1.5 rounded-full', {
+          'bg-emerald-500': status === 'ACTIVE' || status === 'APPROVED',
+          'bg-amber-500': status === 'PENDING',
+          'bg-red-500': status === 'OUT_OF_SERVICE' || status === 'REJECTED',
+          'bg-gray-400': status === 'CANCELLED',
+        })}
+      />
       {config.label}
     </span>
   );

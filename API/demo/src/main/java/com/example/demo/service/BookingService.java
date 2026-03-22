@@ -14,6 +14,10 @@ import com.example.demo.model.enums.FacilityStatus;
 import com.example.demo.repository.BookingRepository;
 import com.example.demo.repository.FacilityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -26,10 +30,28 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final FacilityRepository facilityRepository;
+    private final MongoTemplate mongoTemplate;
 
     public List<BookingResponse> getAllBookings(String userId, BookingStatus status,
                                                 String facilityId, LocalDate date) {
-        List<Booking> bookings = bookingRepository.searchBookings(userId, status, facilityId, date);
+        Query query = new Query();
+
+        if (userId != null && !userId.isBlank()) {
+            query.addCriteria(Criteria.where("userId").is(userId));
+        }
+        if (status != null) {
+            query.addCriteria(Criteria.where("status").is(status));
+        }
+        if (facilityId != null && !facilityId.isBlank()) {
+            query.addCriteria(Criteria.where("facilityId").is(facilityId));
+        }
+        if (date != null) {
+            query.addCriteria(Criteria.where("date").is(date));
+        }
+
+        query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        List<Booking> bookings = mongoTemplate.find(query, Booking.class);
         return bookings.stream().map(BookingResponse::fromEntity).toList();
     }
 
@@ -189,7 +211,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getBookingsByFacilityAndDate(String facilityId, LocalDate date) {
-        return bookingRepository.findByFacilityIdAndDate(facilityId, date)
+        return bookingRepository.findByFacilityIdAndDateOrderByStartTimeAsc(facilityId, date)
                 .stream().map(BookingResponse::fromEntity).toList();
     }
 

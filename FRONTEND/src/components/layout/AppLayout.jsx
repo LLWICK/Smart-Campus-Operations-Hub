@@ -10,23 +10,31 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      {/* Mobile overlay */}
+      <div
+        className={clsx(
+          'fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden transition-opacity duration-300',
+          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={() => setMobileOpen(false)}
+      />
 
-      <div className={clsx('hidden lg:block')}>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block">
         <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       </div>
 
-      {mobileOpen && (
-        <div className="lg:hidden">
-          <Sidebar collapsed={false} setCollapsed={() => setMobileOpen(false)} />
-        </div>
-      )}
+      {/* Mobile sidebar */}
+      <div
+        className={clsx(
+          'fixed inset-y-0 left-0 z-40 lg:hidden transition-transform duration-300 ease-in-out',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <Sidebar collapsed={false} setCollapsed={() => setMobileOpen(false)} />
+      </div>
 
+      {/* Main content */}
       <div
         className={clsx(
           'transition-all duration-300',
@@ -35,7 +43,7 @@ export default function AppLayout() {
       >
         <Navbar onMenuClick={() => setMobileOpen(true)} />
 
-        <main className="p-6">
+        <main className="p-4 sm:p-6 animate-fade-in">
           <Outlet />
         </main>
       </div>

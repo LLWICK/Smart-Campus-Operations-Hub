@@ -13,13 +13,17 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends MongoRepository<Booking, String> {
 
-    List<Booking> findByUserId(String userId);
+    List<Booking> findByUserIdOrderByCreatedAtDesc(String userId);
 
-    List<Booking> findByStatus(BookingStatus status);
+    List<Booking> findByStatusOrderByCreatedAtDesc(BookingStatus status);
 
-    List<Booking> findByFacilityId(String facilityId);
+    List<Booking> findByFacilityIdOrderByDateAscStartTimeAsc(String facilityId);
 
-    List<Booking> findByUserIdAndStatus(String userId, BookingStatus status);
+    List<Booking> findByUserIdAndStatusOrderByCreatedAtDesc(String userId, BookingStatus status);
+
+    List<Booking> findByFacilityIdAndDateOrderByStartTimeAsc(String facilityId, LocalDate date);
+
+    List<Booking> findAllByOrderByCreatedAtDesc();
 
     @Query("{'facilityId': ?0, 'date': ?1, 'status': {$in: ['PENDING','APPROVED']}, "
             + "'startTime': {$lt: ?3}, 'endTime': {$gt: ?2}}")
@@ -31,16 +35,5 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     List<Booking> findConflictsExcluding(String facilityId, LocalDate date,
                                           LocalTime startTime, LocalTime endTime, String excludeId);
 
-    List<Booking> findByFacilityIdAndDate(String facilityId, LocalDate date);
-
     long countByStatus(BookingStatus status);
-
-    @Query("{ $and: ["
-            + "{ $or: [ { $expr: { $eq: [?0, null] } }, { 'userId': ?0 } ] },"
-            + "{ $or: [ { $expr: { $eq: [?1, null] } }, { 'status': ?1 } ] },"
-            + "{ $or: [ { $expr: { $eq: [?2, null] } }, { 'facilityId': ?2 } ] },"
-            + "{ $or: [ { $expr: { $eq: [?3, null] } }, { 'date': ?3 } ] }"
-            + "] }")
-    List<Booking> searchBookings(String userId, BookingStatus status,
-                                  String facilityId, LocalDate date);
 }

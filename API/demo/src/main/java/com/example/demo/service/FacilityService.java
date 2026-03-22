@@ -8,6 +8,10 @@ import com.example.demo.model.enums.FacilityStatus;
 import com.example.demo.model.enums.FacilityType;
 import com.example.demo.repository.FacilityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +21,31 @@ import java.util.List;
 public class FacilityService {
 
     private final FacilityRepository facilityRepository;
+    private final MongoTemplate mongoTemplate;
 
     public List<FacilityResponse> getAllFacilities(FacilityType type, FacilityStatus status,
                                                     Integer minCapacity, String location, String search) {
-        List<Facility> facilities = facilityRepository.searchFacilities(
-                type, status, minCapacity, location, search);
+        Query query = new Query();
+
+        if (type != null) {
+            query.addCriteria(Criteria.where("type").is(type));
+        }
+        if (status != null) {
+            query.addCriteria(Criteria.where("status").is(status));
+        }
+        if (minCapacity != null) {
+            query.addCriteria(Criteria.where("capacity").gte(minCapacity));
+        }
+        if (location != null && !location.isBlank()) {
+            query.addCriteria(Criteria.where("location").regex(location, "i"));
+        }
+        if (search != null && !search.isBlank()) {
+            query.addCriteria(Criteria.where("name").regex(search, "i"));
+        }
+
+        query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        List<Facility> facilities = mongoTemplate.find(query, Facility.class);
         return facilities.stream().map(FacilityResponse::fromEntity).toList();
     }
 

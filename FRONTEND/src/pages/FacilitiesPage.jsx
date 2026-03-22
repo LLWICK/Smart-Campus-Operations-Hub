@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, Search } from 'lucide-react';
 import { facilityApi } from '../api/facilityApi';
 import FacilityCard from '../components/facilities/FacilityCard';
 import FacilityFilters from '../components/facilities/FacilityFilters';
 import PageHeader from '../components/common/PageHeader';
-import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
+import { FacilityCardSkeleton } from '../components/common/Skeleton';
 
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
@@ -45,19 +45,40 @@ export default function FacilitiesPage() {
       <FacilityFilters filters={filters} setFilters={setFilters} />
 
       {loading ? (
-        <LoadingSpinner message="Loading facilities..." />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <FacilityCardSkeleton key={i} />
+          ))}
+        </div>
       ) : facilities.length === 0 ? (
         <EmptyState
           icon={Building2}
           title="No facilities found"
           message="Try adjusting your search or filter criteria"
+          action={
+            filters.search || filters.type || filters.minCapacity ? (
+              <button
+                onClick={() => setFilters({ search: '', type: '', minCapacity: '' })}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors"
+              >
+                <Search className="w-4 h-4" />
+                Clear Filters
+              </button>
+            ) : null
+          }
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {facilities.map((facility) => (
-            <FacilityCard key={facility.id} facility={facility} />
-          ))}
-        </div>
+        <>
+          <p className="text-sm text-gray-500">
+            Showing <span className="font-semibold text-gray-900">{facilities.length}</span>{' '}
+            {facilities.length === 1 ? 'facility' : 'facilities'}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
+            {facilities.map((facility) => (
+              <FacilityCard key={facility.id} facility={facility} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
