@@ -65,14 +65,14 @@ export default function FacilityForm({ isOpen, onClose, onSubmit, initialData })
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white h-full shadow-xl overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="relative w-full sm:max-w-lg bg-white h-full shadow-xl overflow-y-auto animate-slide-in-right">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             {initialData ? 'Edit Facility' : 'Add New Facility'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>

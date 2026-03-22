@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, MapPin, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { facilityApi } from '../api/facilityApi';
 import FacilityForm from '../components/facilities/FacilityForm';
@@ -85,44 +85,34 @@ export default function ManageFacilitiesPage() {
   if (loading) return <LoadingSpinner message="Loading facilities..." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="Manage Facilities"
         description="Add, edit, and manage campus facilities"
         action={
           <button
             onClick={openCreate}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-all shadow-sm active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
-            Add Facility
+            <span className="hidden sm:inline">Add Facility</span>
+            <span className="sm:hidden">Add</span>
           </button>
         }
       />
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Facility
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Capacity
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Facility</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Capacity</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -131,44 +121,22 @@ export default function ManageFacilitiesPage() {
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">{facility.name}</p>
                     {facility.description && (
-                      <p className="text-xs text-gray-500 truncate max-w-xs mt-0.5">
-                        {facility.description}
-                      </p>
+                      <p className="text-xs text-gray-500 truncate max-w-xs mt-0.5">{facility.description}</p>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {typeLabels[facility.type]}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{typeLabels[facility.type]}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{facility.capacity}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{facility.location}</td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={facility.status} type="facility" />
-                  </td>
+                  <td className="px-6 py-4"><StatusBadge status={facility.status} type="facility" /></td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => handleToggleStatus(facility.id)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                        title={facility.status === 'ACTIVE' ? 'Set Out of Service' : 'Set Active'}
-                      >
-                        {facility.status === 'ACTIVE' ? (
-                          <ToggleRight className="w-5 h-5 text-emerald-500" />
-                        ) : (
-                          <ToggleLeft className="w-5 h-5" />
-                        )}
+                      <button onClick={() => handleToggleStatus(facility.id)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors" title={facility.status === 'ACTIVE' ? 'Set Out of Service' : 'Set Active'}>
+                        {facility.status === 'ACTIVE' ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
                       </button>
-                      <button
-                        onClick={() => openEdit(facility)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                        title="Edit"
-                      >
+                      <button onClick={() => openEdit(facility)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors" title="Edit">
                         <Pencil className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => setDeleteModal({ open: true, id: facility.id })}
-                        className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete"
-                      >
+                      <button onClick={() => setDeleteModal({ open: true, id: facility.id })} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Delete">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -178,7 +146,6 @@ export default function ManageFacilitiesPage() {
             </tbody>
           </table>
         </div>
-
         {facilities.length === 0 && (
           <div className="px-6 py-12 text-center text-sm text-gray-500">
             No facilities yet. Click "Add Facility" to create one.
@@ -186,12 +153,51 @@ export default function ManageFacilitiesPage() {
         )}
       </div>
 
+      {/* Mobile card list */}
+      <div className="md:hidden space-y-3">
+        {facilities.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-200 px-6 py-12 text-center text-sm text-gray-500">
+            No facilities yet. Tap "Add" to create one.
+          </div>
+        ) : (
+          facilities.map((facility) => (
+            <div key={facility.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 truncate">{facility.name}</h3>
+                  <p className="text-xs text-primary-600 font-medium mt-0.5">{typeLabels[facility.type]}</p>
+                </div>
+                <StatusBadge status={facility.status} type="facility" />
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+                <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
+                  <Users className="w-3 h-3" /> {facility.capacity}
+                </span>
+                <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg">
+                  <MapPin className="w-3 h-3" /> {facility.location}
+                </span>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end gap-1">
+                <button onClick={() => handleToggleStatus(facility.id)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors active:scale-95">
+                  {facility.status === 'ACTIVE' ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
+                </button>
+                <button onClick={() => openEdit(facility)} className="p-2 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors active:scale-95">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => setDeleteModal({ open: true, id: facility.id })} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors active:scale-95">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       <FacilityForm
         isOpen={formOpen}
-        onClose={() => {
-          setFormOpen(false);
-          setEditingFacility(null);
-        }}
+        onClose={() => { setFormOpen(false); setEditingFacility(null); }}
         onSubmit={editingFacility ? handleUpdate : handleCreate}
         initialData={editingFacility}
       />

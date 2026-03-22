@@ -21,7 +21,7 @@ export default function TimeSlotGrid({ bookings = [], facilityStart = '06:00', f
   };
 
   const statusColors = {
-    available: 'bg-emerald-100 border-emerald-200 hover:bg-emerald-200',
+    available: 'bg-emerald-100 border-emerald-200',
     booked: 'bg-red-100 border-red-200',
     pending: 'bg-amber-100 border-amber-200',
   };
@@ -34,37 +34,39 @@ export default function TimeSlotGrid({ bookings = [], facilityStart = '06:00', f
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-3">
+      <div className="flex items-center gap-2 sm:gap-4 mb-3 flex-wrap">
         <span className="text-xs font-medium text-gray-500">Time Slots</span>
-        <div className="flex gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200" />
-            <span className="text-xs text-gray-500">Available</span>
+        <div className="flex gap-2 sm:gap-3">
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-emerald-100 border border-emerald-200" />
+            <span className="text-[10px] sm:text-xs text-gray-500">Free</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
-            <span className="text-xs text-gray-500">Pending</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-amber-100 border border-amber-200" />
+            <span className="text-[10px] sm:text-xs text-gray-500">Pending</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-red-100 border border-red-200" />
-            <span className="text-xs text-gray-500">Booked</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-red-100 border border-red-200" />
+            <span className="text-[10px] sm:text-xs text-gray-500">Booked</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-13 gap-1.5">
+      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1 sm:gap-1.5">
         {visibleHours.map((hour) => {
           const status = getSlotStatus(hour);
           return (
             <div
               key={hour}
               className={clsx(
-                'relative flex flex-col items-center justify-center py-2.5 px-1 rounded-lg border text-xs font-medium transition-all',
+                'flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 rounded-lg border text-xs font-medium transition-all',
                 statusColors[status]
               )}
               title={`${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00: ${statusLabels[status]}`}
             >
-              <span className="text-gray-700">{String(hour).padStart(2, '0')}:00</span>
+              <span className="text-gray-700 text-[10px] sm:text-xs">
+                {String(hour).padStart(2, '0')}:00
+              </span>
             </div>
           );
         })}
