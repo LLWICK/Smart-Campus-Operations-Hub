@@ -26,9 +26,14 @@ public class Facility {
 
     private String name;
     private FacilityType type;
+    private String primaryCategory;
     private int capacity;
     private String location;
+    private String parentLocationId;
     private String description;
+
+    @Builder.Default
+    private boolean independentlyBookable = true;
 
     @Builder.Default
     private FacilityStatus status = FacilityStatus.ACTIVE;

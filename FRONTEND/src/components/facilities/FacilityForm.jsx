@@ -5,9 +5,12 @@ import { FACILITY_TYPES } from '../../utils/constants';
 const emptyForm = {
   name: '',
   type: 'LECTURE_HALL',
+  primaryCategory: '',
   capacity: '',
   location: '',
+  parentLocationId: '',
   description: '',
+  independentlyBookable: true,
   availabilityStart: '08:00',
   availabilityEnd: '18:00',
   imageUrl: '',
@@ -22,9 +25,12 @@ export default function FacilityForm({ isOpen, onClose, onSubmit, initialData })
       setForm({
         name: initialData.name || '',
         type: initialData.type || 'LECTURE_HALL',
+        primaryCategory: initialData.primaryCategory || '',
         capacity: initialData.capacity || '',
         location: initialData.location || '',
+        parentLocationId: initialData.parentLocationId || '',
         description: initialData.description || '',
+        independentlyBookable: initialData.independentlyBookable ?? true,
         availabilityStart: initialData.availabilityStart || '08:00',
         availabilityEnd: initialData.availabilityEnd || '18:00',
         imageUrl: initialData.imageUrl || '',
@@ -104,6 +110,19 @@ export default function FacilityForm({ isOpen, onClose, onSubmit, initialData })
             </select>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Primary Category
+            </label>
+            <input
+              type="text"
+              value={form.primaryCategory}
+              onChange={(e) => handleChange('primaryCategory', e.target.value)}
+              placeholder="e.g. Computing, Science, Administration"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -132,6 +151,32 @@ export default function FacilityForm({ isOpen, onClose, onSubmit, initialData })
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Parent Location ID
+            </label>
+            <input
+              type="text"
+              value={form.parentLocationId}
+              onChange={(e) => handleChange('parentLocationId', e.target.value)}
+              placeholder="ID of parent resource (optional)"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+            <input
+              type="checkbox"
+              id="independentlyBookable"
+              checked={form.independentlyBookable}
+              onChange={(e) => handleChange('independentlyBookable', e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <label htmlFor="independentlyBookable" className="text-sm text-gray-700">
+              Independently Bookable
+            </label>
           </div>
 
           <div>

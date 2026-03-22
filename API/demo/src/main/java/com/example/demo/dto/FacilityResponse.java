@@ -20,9 +20,12 @@ public class FacilityResponse {
     private String id;
     private String name;
     private FacilityType type;
+    private String primaryCategory;
     private int capacity;
     private String location;
+    private String parentLocationId;
     private String description;
+    private boolean independentlyBookable;
     private FacilityStatus status;
     private LocalTime availabilityStart;
     private LocalTime availabilityEnd;
@@ -35,9 +38,12 @@ public class FacilityResponse {
                 .id(facility.getId())
                 .name(facility.getName())
                 .type(facility.getType())
+                .primaryCategory(facility.getPrimaryCategory())
                 .capacity(facility.getCapacity())
                 .location(facility.getLocation())
+                .parentLocationId(facility.getParentLocationId())
                 .description(facility.getDescription())
+                .independentlyBookable(facility.isIndependentlyBookable())
                 .status(facility.getStatus())
                 .availabilityStart(facility.getAvailabilityStart())
                 .availabilityEnd(facility.getAvailabilityEnd())

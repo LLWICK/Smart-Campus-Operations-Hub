@@ -21,13 +21,19 @@ public class FacilityRequest {
     @NotNull(message = "Facility type is required")
     private FacilityType type;
 
+    private String primaryCategory;
+
     @Min(value = 1, message = "Capacity must be at least 1")
     private int capacity;
 
     @NotBlank(message = "Location is required")
     private String location;
 
+    private String parentLocationId;
+
     private String description;
+
+    private Boolean independentlyBookable;
 
     @NotNull(message = "Availability start time is required")
     private LocalTime availabilityStart;

@@ -59,9 +59,12 @@ public class FacilityService {
         Facility facility = Facility.builder()
                 .name(request.getName())
                 .type(request.getType())
+                .primaryCategory(request.getPrimaryCategory())
                 .capacity(request.getCapacity())
                 .location(request.getLocation())
+                .parentLocationId(request.getParentLocationId())
                 .description(request.getDescription())
+                .independentlyBookable(request.getIndependentlyBookable() != null ? request.getIndependentlyBookable() : true)
                 .availabilityStart(request.getAvailabilityStart())
                 .availabilityEnd(request.getAvailabilityEnd())
                 .imageUrl(request.getImageUrl())
@@ -78,9 +81,14 @@ public class FacilityService {
 
         facility.setName(request.getName());
         facility.setType(request.getType());
+        facility.setPrimaryCategory(request.getPrimaryCategory());
         facility.setCapacity(request.getCapacity());
         facility.setLocation(request.getLocation());
+        facility.setParentLocationId(request.getParentLocationId());
         facility.setDescription(request.getDescription());
+        if (request.getIndependentlyBookable() != null) {
+            facility.setIndependentlyBookable(request.getIndependentlyBookable());
+        }
         facility.setAvailabilityStart(request.getAvailabilityStart());
         facility.setAvailabilityEnd(request.getAvailabilityEnd());
         facility.setImageUrl(request.getImageUrl());
