@@ -19,19 +19,32 @@ Smart-Campus-Operations-Hub/
 
 ## Prerequisites
 
-- Java 21
+- Java 21 (or compatible JDK)
 - Node.js 20+
-- Maven 3.9+
-- MongoDB Atlas account (connection string configured)
+- MongoDB (local or Atlas; connection string in `application.properties`)
+- **Maven is optional** — the project includes `mvnw.cmd` (Windows) / `./mvnw` (Mac/Linux) so you do **not** need `mvn` on your PATH.
 
 ## Setup & Run
 
 ### Backend
 
+From the `API/demo` folder, use the **Maven wrapper** (not `mvn`):
+
+**Windows (PowerShell or CMD):**
+
 ```bash
 cd API/demo
-mvn spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
+
+**Mac / Linux:**
+
+```bash
+cd API/demo
+./mvnw spring-boot:run
+```
+
+If you have Maven installed globally, `mvn spring-boot:run` also works.
 
 The API runs on `http://localhost:8080`.
 
