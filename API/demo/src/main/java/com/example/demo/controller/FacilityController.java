@@ -13,13 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/facilities")
-@RequiredArgsConstructor
+@RestController  
+@RequestMapping("/api/facilities")  
+@RequiredArgsConstructor  
 public class FacilityController {
 
     private final FacilityService facilityService;
 
+    
     @GetMapping
     public ResponseEntity<List<FacilityResponse>> getAllFacilities(
             @RequestParam(required = false) FacilityType type,
@@ -30,17 +31,20 @@ public class FacilityController {
         return ResponseEntity.ok(facilityService.getAllFacilities(type, status, minCapacity, location, search));
     }
 
+    // Get facility by ID
     @GetMapping("/{id}")
     public ResponseEntity<FacilityResponse> getFacilityById(@PathVariable String id) {
         return ResponseEntity.ok(facilityService.getFacilityById(id));
     }
 
+    // Create new facility
     @PostMapping
     public ResponseEntity<FacilityResponse> createFacility(@Valid @RequestBody FacilityRequest request) {
         FacilityResponse created = facilityService.createFacility(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // Update existing facility
     @PutMapping("/{id}")
     public ResponseEntity<FacilityResponse> updateFacility(
             @PathVariable String id,
@@ -48,12 +52,14 @@ public class FacilityController {
         return ResponseEntity.ok(facilityService.updateFacility(id, request));
     }
 
+    // Delete facility by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFacility(@PathVariable String id) {
         facilityService.deleteFacility(id);
         return ResponseEntity.noContent().build();
     }
 
+    // Toggle facility status (ACTIVE ↔ OUT_OF_SERVICE)
     @PatchMapping("/{id}/status")
     public ResponseEntity<FacilityResponse> toggleStatus(@PathVariable String id) {
         return ResponseEntity.ok(facilityService.toggleStatus(id));

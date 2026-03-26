@@ -10,36 +10,35 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Data  
+@NoArgsConstructor  
+@AllArgsConstructor  
 public class FacilityRequest {
 
     @NotBlank(message = "Facility name is required")
-    private String name;
+    private String name; 
 
     @NotNull(message = "Facility type is required")
-    private FacilityType type;
+    private FacilityType type; 
 
     private String primaryCategory;
 
     @Min(value = 1, message = "Capacity must be at least 1")
-    private int capacity;
+    private int capacity; // Minimum capacity validation
 
     @NotBlank(message = "Location is required")
-    private String location;
+    private String location; 
 
     private String parentLocationId;
-
     private String description;
 
-    private Boolean independentlyBookable;
+    private Boolean independentlyBookable; // Optional booking flag
 
     @NotNull(message = "Availability start time is required")
-    private LocalTime availabilityStart;
+    private LocalTime availabilityStart; // Start time
 
     @NotNull(message = "Availability end time is required")
-    private LocalTime availabilityEnd;
+    private LocalTime availabilityEnd; // End time
 
     private String imageUrl;
 }
