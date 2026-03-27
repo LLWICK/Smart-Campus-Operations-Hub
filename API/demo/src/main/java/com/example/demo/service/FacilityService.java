@@ -16,13 +16,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
+@Service  
+@RequiredArgsConstructor  
 public class FacilityService {
 
     private final FacilityRepository facilityRepository;
     private final MongoTemplate mongoTemplate;
 
+    // Get all facilities with optional filters
     public List<FacilityResponse> getAllFacilities(FacilityType type, FacilityStatus status,
                                                     Integer minCapacity, String location, String search) {
         Query query = new Query();
@@ -43,18 +44,20 @@ public class FacilityService {
             query.addCriteria(Criteria.where("name").regex(search, "i"));
         }
 
-        query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+        query.with(Sort.by(Sort.Direction.DESC, "createdAt")); // Sort by latest
 
         List<Facility> facilities = mongoTemplate.find(query, Facility.class);
-        return facilities.stream().map(FacilityResponse::fromEntity).toList();
+        return facilities.stream().map(FacilityResponse::fromEntity).toList(); // Convert to DTO
     }
 
+    // Get single facility by ID
     public FacilityResponse getFacilityById(String id) {
         Facility facility = facilityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Facility", "id", id));
         return FacilityResponse.fromEntity(facility);
     }
 
+    // Create new facility
     public FacilityResponse createFacility(FacilityRequest request) {
         Facility facility = Facility.builder()
                 .name(request.getName())
@@ -68,13 +71,14 @@ public class FacilityService {
                 .availabilityStart(request.getAvailabilityStart())
                 .availabilityEnd(request.getAvailabilityEnd())
                 .imageUrl(request.getImageUrl())
-                .status(FacilityStatus.ACTIVE)
+                .status(FacilityStatus.ACTIVE) // Default status
                 .build();
 
         Facility saved = facilityRepository.save(facility);
         return FacilityResponse.fromEntity(saved);
     }
 
+    // Update existing facility
     public FacilityResponse updateFacility(String id, FacilityRequest request) {
         Facility facility = facilityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Facility", "id", id));
@@ -86,9 +90,11 @@ public class FacilityService {
         facility.setLocation(request.getLocation());
         facility.setParentLocationId(request.getParentLocationId());
         facility.setDescription(request.getDescription());
+
         if (request.getIndependentlyBookable() != null) {
             facility.setIndependentlyBookable(request.getIndependentlyBookable());
         }
+
         facility.setAvailabilityStart(request.getAvailabilityStart());
         facility.setAvailabilityEnd(request.getAvailabilityEnd());
         facility.setImageUrl(request.getImageUrl());
@@ -97,6 +103,7 @@ public class FacilityService {
         return FacilityResponse.fromEntity(saved);
     }
 
+    // Delete facility by ID
     public void deleteFacility(String id) {
         if (!facilityRepository.existsById(id)) {
             throw new ResourceNotFoundException("Facility", "id", id);
@@ -104,6 +111,7 @@ public class FacilityService {
         facilityRepository.deleteById(id);
     }
 
+    // Toggle facility status (ACTIVE ↔ OUT_OF_SERVICE)
     public FacilityResponse toggleStatus(String id) {
         Facility facility = facilityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Facility", "id", id));
@@ -111,16 +119,19 @@ public class FacilityService {
         FacilityStatus newStatus = facility.getStatus() == FacilityStatus.ACTIVE
                 ? FacilityStatus.OUT_OF_SERVICE
                 : FacilityStatus.ACTIVE;
+
         facility.setStatus(newStatus);
 
         Facility saved = facilityRepository.save(facility);
         return FacilityResponse.fromEntity(saved);
     }
 
+    // Count facilities by status
     public long countByStatus(FacilityStatus status) {
         return facilityRepository.countByStatus(status);
     }
 
+    // Count all facilities
     public long countAll() {
         return facilityRepository.count();
     }

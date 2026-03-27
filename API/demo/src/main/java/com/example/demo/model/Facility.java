@@ -14,16 +14,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
 import java.time.LocalTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Document(collection = "facilities")
+@Data 
+@Builder  
+@NoArgsConstructor  
+@AllArgsConstructor  
+@Document(collection = "facilities")  
 public class Facility {
 
-    @Id
+    @Id  
     private String id;
 
+    
     private String name;
     private FacilityType type;
     private String primaryCategory;
@@ -33,18 +34,21 @@ public class Facility {
     private String description;
 
     @Builder.Default
-    private boolean independentlyBookable = true;
+    private boolean independentlyBookable = true; 
 
     @Builder.Default
-    private FacilityStatus status = FacilityStatus.ACTIVE;
+    private FacilityStatus status = FacilityStatus.ACTIVE; 
 
+    // Availability time
     private LocalTime availabilityStart;
     private LocalTime availabilityEnd;
+
+    // Additional info
     private String imageUrl;
 
     @CreatedDate
-    private Instant createdAt;
+    private Instant createdAt; // Auto set on create
 
     @LastModifiedDate
-    private Instant updatedAt;
+    private Instant updatedAt; // Auto update on modify
 }
