@@ -24,8 +24,7 @@ public class FacilityService {
     private final MongoTemplate mongoTemplate;
 
     // Get all facilities with optional filters
-    public List<FacilityResponse> getAllFacilities(FacilityType type, FacilityStatus status,
-                                                    Integer minCapacity, String location, String search) {
+    public List<FacilityResponse> getAllFacilities(FacilityType type, FacilityStatus status, Integer minCapacity, String location, String search) {
         Query query = new Query();
 
         if (type != null) {
