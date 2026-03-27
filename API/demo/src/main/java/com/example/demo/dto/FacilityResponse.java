@@ -15,8 +15,9 @@ import java.time.LocalTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FacilityResponse {
 
+public class FacilityResponse {
+   
     private String id;
     private String name;
     private FacilityType type;
@@ -31,25 +32,29 @@ public class FacilityResponse {
     private LocalTime availabilityEnd;
     private String imageUrl;
     private Instant createdAt;
+
+    
     private Instant updatedAt;
 
     public static FacilityResponse fromEntity(Facility facility) {
+
+        // Using Builder pattern to map entity fields to DTO fields
         return FacilityResponse.builder()
-                .id(facility.getId())
-                .name(facility.getName())
-                .type(facility.getType())
-                .primaryCategory(facility.getPrimaryCategory())
-                .capacity(facility.getCapacity())
-                .location(facility.getLocation())
-                .parentLocationId(facility.getParentLocationId())
-                .description(facility.getDescription())
-                .independentlyBookable(facility.isIndependentlyBookable())
-                .status(facility.getStatus())
-                .availabilityStart(facility.getAvailabilityStart())
-                .availabilityEnd(facility.getAvailabilityEnd())
-                .imageUrl(facility.getImageUrl())
-                .createdAt(facility.getCreatedAt())
-                .updatedAt(facility.getUpdatedAt())
-                .build();
+                .id(facility.getId()) // Mapping id
+                .name(facility.getName()) // Mapping name
+                .type(facility.getType()) // Mapping type
+                .primaryCategory(facility.getPrimaryCategory()) // Mapping category
+                .capacity(facility.getCapacity()) // Mapping capacity
+                .location(facility.getLocation()) // Mapping location
+                .parentLocationId(facility.getParentLocationId()) // Mapping parent location
+                .description(facility.getDescription()) // Mapping description
+                .independentlyBookable(facility.isIndependentlyBookable()) // Mapping booking flag
+                .status(facility.getStatus()) // Mapping status
+                .availabilityStart(facility.getAvailabilityStart()) // Mapping start time
+                .availabilityEnd(facility.getAvailabilityEnd()) // Mapping end time
+                .imageUrl(facility.getImageUrl()) // Mapping image URL
+                .createdAt(facility.getCreatedAt()) // Mapping created timestamp
+                .updatedAt(facility.getUpdatedAt()) // Mapping updated timestamp
+                .build(); // Building the DTO object
     }
 }
