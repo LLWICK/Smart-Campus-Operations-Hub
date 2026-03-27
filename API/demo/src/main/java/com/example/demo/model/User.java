@@ -7,27 +7,39 @@ import java.util.List;
 
 @Document(collection = "users")
 public class User {
+    //Support for multiple authentication providers (e.g., local, Google OAuth)
+    public enum AuthProvider {
+        LOCAL, GOOGLE
+    }
+
 
     @Id
-    private String id; // Maps to your 'UID'
+    private String id; 
 
     private String name;
     private String email;
-    private String password; // Will be empty/null if they sign in via Google OAuth
+    
+    // Will be null if authProvider is GOOGLE
+    private String password; 
     private LocalDate dob;
     
-    // Role Management
-    private String role; // e.g., "STUDENT", "ADMIN", "TECHNICIAN", "LECTURER"
-    private List<String> permissions; // Maps to the double-oval Permissions attribute
+    // --- OAuth 2.0 Specific Fields ---
+    private AuthProvider authProvider; 
+    private String providerId; // Google's unique identifier for the user (the 'sub' claim)
+    private String profileImageUrl; // The Google avatar URL to display in your React UI
+
+    // --- Role Management ---
+    private String role; 
+    private List<String> permissions; 
     
-    // Sub-type specific attributes
-    private String speciality; // Maps to the Technicians subtype. Will be null for other users.
+    // --- Sub-type specific attributes ---
+    private String speciality;
 
     // Default Constructor
     public User() {
     }
 
-    // Constructor for standard attributes
+    // Constructor for Local Registration
     public User(String name, String email, String password, LocalDate dob, String role, List<String> permissions) {
         this.name = name;
         this.email = email;
@@ -35,7 +47,22 @@ public class User {
         this.dob = dob;
         this.role = role;
         this.permissions = permissions;
+        this.authProvider = AuthProvider.LOCAL;
     }
+
+    // Constructor for Google OAuth Registration
+    public User(String name, String email, String providerId, String profileImageUrl, String role, List<String> permissions) {
+        this.name = name;
+        this.email = email;
+        this.providerId = providerId;
+        this.profileImageUrl = profileImageUrl;
+        this.role = role;
+        this.permissions = permissions;
+        this.authProvider = AuthProvider.GOOGLE;
+        // Password and DOB might be null initially for OAuth users
+    }
+
+
 
     // TODO: Generate Getters and Setters (Right-click -> Source Action -> Generate Getters and Setters)
 }
