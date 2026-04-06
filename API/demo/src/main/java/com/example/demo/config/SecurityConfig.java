@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -21,8 +20,16 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                // We removed the STATELESS session policy here so OAuth2 can do its handshake
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/status", "/error").permitAll() // Let React check if logged in
+                        .anyRequest().authenticated() // Lock down all other endpoints
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        // Assuming you are using Vite on 5173 based on your CORS config. 
+                        // If your React app is running on 3000, change this URL!
+                        .defaultSuccessUrl("http://localhost:5173/", true)
+                );
 
         return http.build();
     }
