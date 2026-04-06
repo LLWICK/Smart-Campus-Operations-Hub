@@ -8,6 +8,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.example.demo.service.CustomOAuth2UserService;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
@@ -26,6 +27,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // Lock down all other endpoints
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         // Assuming you are using Vite on 5173 based on your CORS config. 
                         // If your React app is running on 3000, change this URL!
                         .defaultSuccessUrl("http://localhost:5173/", true)

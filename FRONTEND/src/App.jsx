@@ -9,11 +9,18 @@ import BookingDetailPage from './pages/BookingDetailPage';
 import ManageFacilitiesPage from './pages/ManageFacilitiesPage';
 import ManageBookingsPage from './pages/ManageBookingsPage';
 import NotFoundPage from './pages/NotFoundPage';
+import LoginPage from './pages/Login';
+import ProtectedRoute from './auth/ProtectedRoute';
 
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={
+        <ProtectedRoute>
+          <AppLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<DashboardPage />} />
         <Route path="facilities" element={<FacilitiesPage />} />
         <Route path="facilities/:id" element={<FacilityDetailPage />} />
