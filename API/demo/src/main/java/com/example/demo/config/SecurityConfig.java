@@ -24,6 +24,7 @@ public class SecurityConfig {
                 // We removed the STATELESS session policy here so OAuth2 can do its handshake
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/status", "/error").permitAll() // Let React check if logged in
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated() // Lock down all other endpoints
                 )
                 .oauth2Login(oauth2 -> oauth2

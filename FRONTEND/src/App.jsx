@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
 import FacilitiesPage from './pages/FacilitiesPage';
@@ -11,6 +11,8 @@ import ManageBookingsPage from './pages/ManageBookingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/Login';
 import ProtectedRoute from './auth/ProtectedRoute';
+import AdminRoute from './auth/AdminRoute';
+import ManageUsersPage from './pages/ManageUsersPage';
 
 export default function App() {
   return (
@@ -28,8 +30,14 @@ export default function App() {
         <Route path="bookings/new" element={<NewBookingPage />} />
         <Route path="bookings/new/:facilityId" element={<NewBookingPage />} />
         <Route path="bookings/:id" element={<BookingDetailPage />} />
-        <Route path="admin/facilities" element={<ManageFacilitiesPage />} />
-        <Route path="admin/bookings" element={<ManageBookingsPage />} />
+        
+        {/* Admin Routes */}
+        <Route element={<AdminRoute><Outlet /></AdminRoute>}>
+          <Route path="admin/facilities" element={<ManageFacilitiesPage />} />
+          <Route path="admin/bookings" element={<ManageBookingsPage />} />
+          <Route path="admin/users" element={<ManageUsersPage />} />
+        </Route>
+        
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

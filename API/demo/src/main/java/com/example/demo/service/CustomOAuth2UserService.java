@@ -3,14 +3,18 @@ package com.example.demo.service;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -20,31 +24,55 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // Delegate to the default implementation for loading a user
         OAuth2User oauth2User = super.loadUser(userRequest);
 
-        // Extract Google attributes
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
         String picture = oauth2User.getAttribute("picture");
         String providerId = oauth2User.getAttribute("sub");
 
-        // Check if user exists in DB
         Optional<User> existingUser = userRepository.findByEmail(email);
+        User dbUser;
 
         if (existingUser.isEmpty()) {
-            // New user login, save them to the database using the Google Auth Constructor
-            User newUser = new User(
+            dbUser = new User(
                 name,
                 email,
                 providerId,
                 picture,
-                "student", // Default role
-                List.of()  // Empty permissions list
+                "student", 
+                List.of()
             );
-            userRepository.save(newUser);
+            dbUser = userRepository.save(dbUser);
+        } else {
+            dbUser = existingUser.get();
+            boolean updated = false;
+            
+            if (dbUser.getProviderId() == null) {
+                dbUser.setProviderId(providerId);
+                updated = true;
+            }
+            if (dbUser.getProfileImageUrl() == null) {
+                dbUser.setProfileImageUrl(picture);
+                updated = true;
+            }
+            if (dbUser.getAuthProvider() == null) {
+                dbUser.setAuthProvider(User.AuthProvider.GOOGLE);
+                updated = true;
+            }
+            
+            if (updated) {
+                dbUser = userRepository.save(dbUser);
+            }
         }
 
-        return oauth2User;
+        List<GrantedAuthority> authorities = new ArrayList<>(oauth2User.getAuthorities());
+        if (dbUser.getRole() != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + dbUser.getRole().toUpperCase()));
+        }
+
+        // Return a customized OAuth2User that includes the Spring Security DB roles
+        // We use "sub" as the name attribute key because it's standard for Google
+        return new DefaultOAuth2User(authorities, oauth2User.getAttributes(), "sub");
     }
 }
