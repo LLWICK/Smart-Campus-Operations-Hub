@@ -32,6 +32,7 @@ public class SecurityConfig {
                         // Assuming you are using Vite on 5173 based on your CORS config. 
                         // If your React app is running on 3000, change this URL!
                         .defaultSuccessUrl("http://localhost:5173/", true)
+                        .failureUrl("http://localhost:5173/login?error=true")
                 );
 
         return http.build();

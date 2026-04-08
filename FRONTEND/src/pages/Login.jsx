@@ -1,9 +1,26 @@
-import { ShieldCheck, LogIn, Sparkles } from 'lucide-react';
+import { ShieldCheck, Sparkles, AlertTriangle, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function LoginPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('error') === 'true') {
+      setShowError(true);
+      // Clean the URL so the error doesn't persist on refresh
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleGoogleLogin = () => {
     // This redirects to your Spring Boot OAuth2 endpoint
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
+
+  const dismissError = () => {
+    setShowError(false);
   };
 
   return (
@@ -24,6 +41,25 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md stagger">
+        {/* Error Banner */}
+        {showError && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3 animate-fade-in">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-red-800">Access Denied</h4>
+              <p className="text-sm text-red-600 mt-1">
+                Your email has not been enrolled by an administrator. Please contact your campus admin to request access.
+              </p>
+            </div>
+            <button 
+              onClick={dismissError} 
+              className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 sm:rounded-3xl sm:px-10 border border-gray-100">
           <div className="space-y-6">
             <div className="text-center">

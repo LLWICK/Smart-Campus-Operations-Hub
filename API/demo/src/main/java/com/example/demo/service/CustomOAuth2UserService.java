@@ -35,16 +35,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User dbUser;
 
         if (existingUser.isEmpty()) {
-            dbUser = new User(
-                name,
-                email,
-                providerId,
-                picture,
-                "student", 
-                List.of()
+            // REJECT: Only admin-enrolled users can log in
+            throw new OAuth2AuthenticationException(
+                "Access denied. Your email (" + email + ") has not been enrolled by an administrator. " +
+                "Please contact your campus admin to request access."
             );
-            dbUser = userRepository.save(dbUser);
-        } else {
+        } 
+        else {
             dbUser = existingUser.get();
             boolean updated = false;
             
