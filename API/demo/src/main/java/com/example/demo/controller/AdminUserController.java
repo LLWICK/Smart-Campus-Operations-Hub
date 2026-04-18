@@ -88,4 +88,41 @@ public class AdminUserController {
         
         return ResponseEntity.ok(savedUser);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody User updateRequest) {
+        Optional<User> existingUserOpt = userRepository.findById(id);
+        if (existingUserOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User existingUser = existingUserOpt.get();
+        
+        existingUser.setFirstName(updateRequest.getFirstName());
+        existingUser.setLastName(updateRequest.getLastName());
+        
+        String fName = updateRequest.getFirstName() != null ? updateRequest.getFirstName() : "";
+        String lName = updateRequest.getLastName() != null ? updateRequest.getLastName() : "";
+        existingUser.setName((fName + " " + lName).trim());
+
+        existingUser.setPhoneNumber(updateRequest.getPhoneNumber());
+        existingUser.setGender(updateRequest.getGender());
+        existingUser.setDob(updateRequest.getDob());
+        
+        existingUser.setDegreeProgram(updateRequest.getDegreeProgram());
+        existingUser.setSalary(updateRequest.getSalary());
+        existingUser.setSpeciality(updateRequest.getSpeciality());
+
+        userRepository.save(existingUser);
+        return ResponseEntity.ok(existingUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable String id) {
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        userRepository.deleteById(id);
+        return ResponseEntity.ok("User deleted successfully.");
+    }
 }
