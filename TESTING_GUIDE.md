@@ -5,6 +5,12 @@
 1. **Backend running:** `cd API/demo && .\mvnw.cmd spring-boot:run` (http://localhost:8080)
 2. **Frontend running:** `cd FRONTEND && npm run dev` (http://localhost:5173)
 3. Open **http://localhost:5173** in your browser
+4. **Sign in with Google** (your email must be enrolled by an admin). Booking features require an authenticated session; the API uses the logged-in user’s identity for creating bookings (no hardcoded “default user”).
+
+### Notes for API / Postman testing
+
+- Most `/api/*` endpoints require a **logged-in session** (cookie from OAuth). Copy the session cookie from the browser after login, or use the UI for primary verification.
+- The React app calls the API at **`http://localhost:8080/api`** with **`credentials`** so the session cookie is sent.
 
 ---
 
@@ -91,8 +97,11 @@ Repeat F1 with these variations:
 
 ## MODULE B: Booking Management (Member 2)
 
+**Security behaviour (summary):** Non-admin users only see **their own** bookings on **My Bookings**. **Create** assigns **userId** / **userName** from the enrolled user (not from the request body). **Approve** / **reject** are **admin-only**. **View / update / cancel** by id require **owner or admin**. **Update** (edit) is only allowed while status is **PENDING**.
+
 ### Test Case B1: Create a Booking
 1. Go to sidebar -> **My Bookings**
+
 2. Click **"New Booking"**
 3. Step 1 - Select Slot:
    - Select a facility from dropdown
@@ -107,7 +116,7 @@ Repeat F1 with these variations:
    - Enter expected attendees: `30`
    - Click **"Submit Booking Request"**
 5. **Expected:** Toast "Booking request submitted successfully!", redirected to My Bookings
-6. New booking appears with **PENDING** status badge
+6. New booking appears with **PENDING** status badge and **Booked By** showing your account name (from the database), not a placeholder user
 
 ### Test Case B2: Booking Conflict Detection
 1. Create a booking for `Computer Lab 01` on `2026-03-25`, `09:00-11:00`
@@ -129,14 +138,15 @@ Repeat F1 with these variations:
    - Date, time, attendees, booked by info cards
    - Purpose section
    - Admin response (if approved/rejected)
-   - "Cancel Booking" button (if PENDING or APPROVED)
+   - **"Edit booking"** button if status is **PENDING** and you are the owner (or an admin); opens **`/bookings/{id}/edit`**
+   - "Cancel Booking" button if **PENDING** or **APPROVED** and you are the owner (or an admin)
    - "View Facility" link
 
 ### Test Case B5: Filter Bookings by Status
 1. Go to **My Bookings**
 2. Click **"Pending"** filter tab
-3. **Expected:** Only PENDING bookings shown
-4. Click **"All"** to see everything
+3. **Expected:** Only **your** PENDING bookings are shown (non-admins never see other users’ bookings in this list)
+4. Click **"All"** to see everything (still scoped to your bookings for students; admins using **Manage Bookings** see all)
 
 ### Test Case B6: Cancel a Booking
 1. Go to **My Bookings** -> click a PENDING or APPROVED booking
@@ -182,17 +192,40 @@ Repeat F1 with these variations:
 2. In Step 2, enter expected attendees: `50`
 3. **Expected:** Amber warning "Exceeds facility capacity of 40" appears below the field
 
-### Test Case B13: Update a Pending Booking
-- **API Test (Postman/curl):**
+### Test Case B13: Edit a Pending Booking (UI)
+1. Open a **PENDING** booking you own (or use an admin account)
+2. Click **"Edit booking"**
+3. Change facility, date/time, purpose, or attendees as needed
+4. Step 1: **"Check Availability & Continue"** — should not falsely conflict with **your own** current slot (server supports `excludeBookingId` for this check)
+5. Step 2: Click **"Save changes"**
+6. **Expected:** Toast success, redirect to booking detail; list and detail reflect updates
+
+### Test Case B13b: Update a Pending Booking (API)
 ```
 PUT http://localhost:8080/api/bookings/{bookingId}
-Body: { same fields as create but with changes }
+Content-Type: application/json
+Cookie: JSESSIONID=...   (session after OAuth login)
+
+Body (same shape as create; do NOT send userId/userName — identity comes from session):
+{
+  "facilityId": "<id>",
+  "date": "2026-03-25",
+  "startTime": "09:00",
+  "endTime": "11:00",
+  "purpose": "Updated purpose",
+  "expectedAttendees": 20
+}
 ```
-- **Expected:** Only works if status is PENDING, returns updated booking
+- **Expected:** Only if status is **PENDING** and you are **owner or admin**; returns updated booking
 
 ### Test Case B14: Cannot Update Non-Pending Booking
-- Approve a booking first, then try to PUT update it
+- Approve a booking first, then try **Edit** (should not appear) or **PUT** via API
 - **Expected:** 400 error "Only PENDING bookings can be updated"
+
+### Test Case B15: Non-owner Cannot Edit or Cancel Another User’s Booking
+1. As a **student**, attempt to open **`/bookings/{someoneElseId}/edit`** in the address bar (use another booking’s id from an admin view if needed)
+2. **Expected:** Access denied / redirect with message; or 403 from API
+3. Same for **cancel** on another user’s booking
 
 ---
 
@@ -282,10 +315,19 @@ DELETE http://localhost:8080/api/facilities/{id}
 PATCH  http://localhost:8080/api/facilities/{id}/status
 ```
 
+### Auth
+```
+GET    http://localhost:8080/api/auth/status
+```
+Returns JSON including `authenticated`, `name`, `email`, `role`, and **`userId`** (Mongo user id) when the user exists in the database.
+
 ### Bookings
+All routes below require authentication unless noted. **Approve** / **reject** require **ADMIN** role.
+
 ```
 GET    http://localhost:8080/api/bookings
-GET    http://localhost:8080/api/bookings?status=PENDING&userId=user-001&facilityId={id}&date=2026-03-25
+GET    http://localhost:8080/api/bookings?status=PENDING&facilityId={id}&date=2026-03-25
+       (optional userId filter applies to admins only; non-admins always see only their bookings)
 GET    http://localhost:8080/api/bookings/{id}
 POST   http://localhost:8080/api/bookings
 PUT    http://localhost:8080/api/bookings/{id}
@@ -293,8 +335,12 @@ DELETE http://localhost:8080/api/bookings/{id}
 PATCH  http://localhost:8080/api/bookings/{id}/approve
 PATCH  http://localhost:8080/api/bookings/{id}/reject
 GET    http://localhost:8080/api/bookings/check-availability?facilityId={id}&date=2026-03-25&startTime=09:00&endTime=11:00
+GET    http://localhost:8080/api/bookings/check-availability?...&excludeBookingId={id}
+       (optional; use when editing a booking so the current booking is excluded from conflict detection)
 GET    http://localhost:8080/api/bookings/facility/{facilityId}/date/2026-03-25
 ```
+
+**Booking-related HTTP status codes (reference):** `400` validation/invalid operation; `403` forbidden (wrong user or not admin for approve/reject); `404` not found; `409` booking conflict.
 
 ### Dashboard
 ```
@@ -315,11 +361,10 @@ GET    http://localhost:8080/api/dashboard/stats
 ```
 
 ### Sample POST Body - Create Booking
+Identity is taken from the **OAuth session** — do **not** send `userId` or `userName`.
 ```json
 {
   "facilityId": "<facility-id-from-GET>",
-  "userId": "user-001",
-  "userName": "Campus User",
   "date": "2026-03-25",
   "startTime": "09:00",
   "endTime": "11:00",
@@ -334,8 +379,6 @@ GET    http://localhost:8080/api/dashboard/stats
   "reason": "Facility under maintenance"
 }
 ```
-
----
 
 ## Error Response Format (all errors follow this)
 ```json

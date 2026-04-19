@@ -9,6 +9,7 @@ import com.example.demo.exception.InvalidOperationException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Booking;
 import com.example.demo.model.Facility;
+import com.example.demo.model.User;
 import com.example.demo.model.enums.BookingStatus;
 import com.example.demo.model.enums.FacilityStatus;
 import com.example.demo.repository.BookingRepository;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -33,11 +35,13 @@ public class BookingService {
     private final MongoTemplate mongoTemplate;
 
     public List<BookingResponse> getAllBookings(String userId, BookingStatus status,
-                                                String facilityId, LocalDate date) {
+                                                  String facilityId, LocalDate date, User currentUser) {
+        String effectiveUserId = isAdmin(currentUser) ? userId : currentUser.getId();
+
         Query query = new Query();
 
-        if (userId != null && !userId.isBlank()) {
-            query.addCriteria(Criteria.where("userId").is(userId));
+        if (effectiveUserId != null && !effectiveUserId.isBlank()) {
+            query.addCriteria(Criteria.where("userId").is(effectiveUserId));
         }
         if (status != null) {
             query.addCriteria(Criteria.where("status").is(status));
@@ -55,13 +59,14 @@ public class BookingService {
         return bookings.stream().map(BookingResponse::fromEntity).toList();
     }
 
-    public BookingResponse getBookingById(String id) {
+    public BookingResponse getBookingById(String id, User currentUser) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
+        assertBookingAccess(booking, currentUser);
         return BookingResponse.fromEntity(booking);
     }
 
-    public BookingResponse createBooking(BookingRequest request) {
+    public BookingResponse createBooking(BookingRequest request, User booker) {
         Facility facility = facilityRepository.findById(request.getFacilityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Facility", "id", request.getFacilityId()));
 
@@ -69,6 +74,7 @@ public class BookingService {
             throw new InvalidOperationException("Cannot book a facility that is out of service");
         }
 
+        validateAttendeesVsCapacity(request.getExpectedAttendees(), facility);
         validateTimeRange(request.getStartTime(), request.getEndTime());
         validateWithinAvailability(request.getStartTime(), request.getEndTime(), facility);
 
@@ -84,8 +90,8 @@ public class BookingService {
         Booking booking = Booking.builder()
                 .facilityId(facility.getId())
                 .facilityName(facility.getName())
-                .userId(request.getUserId())
-                .userName(request.getUserName())
+                .userId(booker.getId())
+                .userName(booker.getName())
                 .date(request.getDate())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
@@ -98,9 +104,11 @@ public class BookingService {
         return BookingResponse.fromEntity(saved);
     }
 
-    public BookingResponse updateBooking(String id, BookingRequest request) {
+    public BookingResponse updateBooking(String id, BookingRequest request, User currentUser) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
+
+        assertBookingAccess(booking, currentUser);
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new InvalidOperationException("Only PENDING bookings can be updated");
@@ -109,6 +117,7 @@ public class BookingService {
         Facility facility = facilityRepository.findById(request.getFacilityId())
                 .orElseThrow(() -> new ResourceNotFoundException("Facility", "id", request.getFacilityId()));
 
+        validateAttendeesVsCapacity(request.getExpectedAttendees(), facility);
         validateTimeRange(request.getStartTime(), request.getEndTime());
         validateWithinAvailability(request.getStartTime(), request.getEndTime(), facility);
 
@@ -133,9 +142,11 @@ public class BookingService {
         return BookingResponse.fromEntity(saved);
     }
 
-    public void cancelBooking(String id) {
+    public void cancelBooking(String id, User currentUser) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
+
+        assertBookingAccess(booking, currentUser);
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new InvalidOperationException("Booking is already cancelled");
@@ -186,13 +197,20 @@ public class BookingService {
     }
 
     public AvailabilityResponse checkAvailability(String facilityId, LocalDate date,
-                                                    LocalTime startTime, LocalTime endTime) {
+                                                  LocalTime startTime, LocalTime endTime,
+                                                  String excludeBookingId) {
         facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Facility", "id", facilityId));
 
         validateTimeRange(startTime, endTime);
 
-        List<Booking> conflicts = bookingRepository.findConflicts(facilityId, date, startTime, endTime);
+        List<Booking> conflicts;
+        if (excludeBookingId != null && !excludeBookingId.isBlank()) {
+            conflicts = bookingRepository.findConflictsExcluding(
+                    facilityId, date, startTime, endTime, excludeBookingId);
+        } else {
+            conflicts = bookingRepository.findConflicts(facilityId, date, startTime, endTime);
+        }
         List<BookingResponse> conflictResponses = conflicts.stream()
                 .map(BookingResponse::fromEntity).toList();
 
@@ -213,6 +231,27 @@ public class BookingService {
     public List<BookingResponse> getBookingsByFacilityAndDate(String facilityId, LocalDate date) {
         return bookingRepository.findByFacilityIdAndDateOrderByStartTimeAsc(facilityId, date)
                 .stream().map(BookingResponse::fromEntity).toList();
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRole() != null && "admin".equalsIgnoreCase(user.getRole());
+    }
+
+    private void assertBookingAccess(Booking booking, User user) {
+        if (isAdmin(user)) {
+            return;
+        }
+        if (booking.getUserId() != null && booking.getUserId().equals(user.getId())) {
+            return;
+        }
+        throw new AccessDeniedException("You do not have access to this booking");
+    }
+
+    private void validateAttendeesVsCapacity(int expectedAttendees, Facility facility) {
+        if (expectedAttendees > facility.getCapacity()) {
+            throw new InvalidOperationException(
+                    "Expected attendees cannot exceed facility capacity (" + facility.getCapacity() + ")");
+        }
     }
 
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
