@@ -1,6 +1,11 @@
 import { Menu, User, Building2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar({ onMenuClick }) {
+  const { user } = useAuth();
+  const displayName = user?.name?.trim() || user?.email || 'User';
+  const displayEmail = user?.email || '';
+
   return (
     <header className="sticky top-0 z-30 h-14 sm:h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 flex items-center justify-between px-3 sm:px-6">
       <div className="flex items-center gap-2 sm:gap-3">
@@ -25,12 +30,25 @@ export default function Navbar({ onMenuClick }) {
 
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-gray-100">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
-            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-sm font-semibold text-gray-900 leading-tight">Campus User</p>
-            <p className="text-xs text-gray-500">user@campus.edu</p>
+          {user?.picture ? (
+            <img
+              src={user.picture}
+              alt=""
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover shadow-sm ring-2 ring-white"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+            </div>
+          )}
+          <div className="hidden sm:block min-w-0">
+            <p className="text-sm font-semibold text-gray-900 leading-tight truncate max-w-[160px] md:max-w-[220px]">
+              {displayName}
+            </p>
+            {displayEmail ? (
+              <p className="text-xs text-gray-500 truncate max-w-[160px] md:max-w-[220px]">{displayEmail}</p>
+            ) : null}
           </div>
         </div>
       </div>

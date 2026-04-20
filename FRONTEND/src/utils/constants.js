@@ -24,7 +24,3 @@ export const FACILITY_TYPE_ICONS = {
   EQUIPMENT: 'Monitor',
 };
 
-export const DEFAULT_USER = {
-  id: 'user-001',
-  name: 'Campus User',
-};

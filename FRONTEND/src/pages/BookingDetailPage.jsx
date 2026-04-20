@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Copy,
   CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { bookingApi } from '../api/bookingApi';
@@ -18,10 +19,12 @@ import StatusBadge from '../components/common/StatusBadge';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { SkeletonBox } from '../components/common/Skeleton';
 import { format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 
 export default function BookingDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelModal, setCancelModal] = useState(false);
@@ -84,7 +87,12 @@ export default function BookingDetailPage() {
 
   if (!booking) return null;
 
-  const canCancel = booking.status === 'PENDING' || booking.status === 'APPROVED';
+  const isOwnerOrAdmin =
+    user?.role === 'admin' ||
+    (user?.userId && booking.userId && user.userId === booking.userId);
+  const canCancel =
+    isOwnerOrAdmin && (booking.status === 'PENDING' || booking.status === 'APPROVED');
+  const canEdit = isOwnerOrAdmin && booking.status === 'PENDING';
 
   const statusConfig = {
     PENDING: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800' },
@@ -137,15 +145,27 @@ export default function BookingDetailPage() {
                 )}
               </button>
             </div>
-            {canCancel && (
-              <button
-                onClick={() => setCancelModal(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all duration-200 active:scale-[0.98]"
-              >
-                <XCircle className="w-4 h-4" />
-                Cancel Booking
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              {canEdit && (
+                <Link
+                  to={`/bookings/${booking.id}/edit`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-xl hover:bg-primary-100 transition-all duration-200 active:scale-[0.98]"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit booking
+                </Link>
+              )}
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={() => setCancelModal(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all duration-200 active:scale-[0.98]"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Cancel Booking
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
