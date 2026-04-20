@@ -56,7 +56,12 @@ npm install
 npm run dev
 ```
 
-The client runs on `http://localhost:5173` and proxies API requests to the backend.
+The client runs on `http://localhost:5173`. The booking and facility API clients use **`http://localhost:8080/api`** with **credentials** so the browser sends the same **OAuth session cookie** as `/api/auth/status` (required for authenticated REST calls).
+
+## Authentication
+
+- **Google OAuth2** — users must be **enrolled** in the database (see admin user management); unlisted emails cannot sign in.
+- **`GET /api/auth/status`** — returns `authenticated`, profile fields, `role`, and **`userId`** (MongoDB user id) for the SPA.
 
 ## API Endpoints
 
@@ -73,16 +78,23 @@ The client runs on `http://localhost:5173` and proxies API requests to the backe
 
 ### Bookings (`/api/bookings`)
 
+Authenticated users only. **Create** sets the booker from the session (request body does not include `userId` / `userName`). **List** is scoped to the current user unless the caller is an **admin**. **Get / update / cancel by id** require **owner or admin**. **Approve** and **reject** require **ADMIN**.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/bookings` | List bookings (with filters) |
+| GET | `/api/bookings` | List bookings (filters; non-admins see only their own) |
 | GET | `/api/bookings/{id}` | Get booking by ID |
 | POST | `/api/bookings` | Create booking |
-| PUT | `/api/bookings/{id}` | Update booking |
-| DELETE | `/api/bookings/{id}` | Cancel booking |
-| PATCH | `/api/bookings/{id}/approve` | Approve booking |
-| PATCH | `/api/bookings/{id}/reject` | Reject booking |
-| GET | `/api/bookings/check-availability` | Check availability |
+| PUT | `/api/bookings/{id}` | Update booking (PENDING only; owner or admin) |
+| DELETE | `/api/bookings/{id}` | Cancel booking (owner or admin) |
+| PATCH | `/api/bookings/{id}/approve` | Approve booking (**admin only**) |
+| PATCH | `/api/bookings/{id}/reject` | Reject booking (**admin only**) |
+| GET | `/api/bookings/check-availability` | Check availability (optional `excludeBookingId` when editing) |
+| GET | `/api/bookings/facility/{facilityId}/date/{date}` | Bookings for a facility on a date |
+
+**Frontend (Module B):** My Bookings, New Booking, Booking detail (cancel / **edit** when PENDING), **Edit booking** page (`/bookings/:id/edit`), Admin **Manage Bookings**.
+
+See **[TESTING_GUIDE.md](TESTING_GUIDE.md)** for step-by-step checks.
 
 ### Dashboard (`/api/dashboard`)
 

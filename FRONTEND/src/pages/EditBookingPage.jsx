@@ -1,22 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, CheckCircle2, Clock, CalendarPlus, Info } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2, Clock, Info, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { facilityApi } from '../api/facilityApi';
 import { bookingApi } from '../api/bookingApi';
 import TimeSlotGrid from '../components/bookings/TimeSlotGrid';
 import { format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 
-export default function NewBookingPage() {
-  const { facilityId: preselectedFacilityId } = useParams();
+function toDateInput(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.slice(0, 10);
+  return format(new Date(value), 'yyyy-MM-dd');
+}
+
+function toTimeInput(value) {
+  if (value == null || value === '') return '';
+  const s = String(value);
+  if (s.includes(':')) {
+    const parts = s.split(':');
+    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+  }
+  return s;
+}
+
+export default function EditBookingPage() {
+  const { id: bookingId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
+  const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState([]);
   const [form, setForm] = useState({
-    facilityId: preselectedFacilityId || '',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    startTime: '09:00',
-    endTime: '10:00',
+    facilityId: '',
+    date: '',
+    startTime: '',
+    endTime: '',
     purpose: '',
     expectedAttendees: '',
   });
@@ -27,23 +46,85 @@ export default function NewBookingPage() {
   const [step, setStep] = useState(1);
 
   useEffect(() => {
-    facilityApi.getAll({ status: 'ACTIVE' }).then((res) => setFacilities(res.data));
-  }, []);
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [bookingRes, facilitiesRes] = await Promise.all([
+          bookingApi.getById(bookingId),
+          facilityApi.getAll({ status: 'ACTIVE' }),
+        ]);
+        const b = bookingRes.data;
+        const list = facilitiesRes.data || [];
+        const isOwnerOrAdmin =
+          user?.role === 'admin' ||
+          (user?.userId && b.userId && user.userId === b.userId);
+        if (!isOwnerOrAdmin) {
+          toast.error('You cannot edit this booking');
+          navigate(`/bookings/${bookingId}`, { replace: true });
+          return;
+        }
+        if (b.status !== 'PENDING') {
+          toast.error('Only pending bookings can be edited');
+          navigate(`/bookings/${bookingId}`, { replace: true });
+          return;
+        }
+        let merged = [...list];
+        if (!merged.some((f) => f.id === b.facilityId)) {
+          try {
+            const fRes = await facilityApi.getById(b.facilityId);
+            merged = [fRes.data, ...merged];
+          } catch {
+            /* keep list as-is */
+          }
+        }
+        if (cancelled) return;
+        setFacilities(merged);
+        setForm({
+          facilityId: b.facilityId,
+          date: toDateInput(b.date),
+          startTime: toTimeInput(b.startTime),
+          endTime: toTimeInput(b.endTime),
+          purpose: b.purpose || '',
+          expectedAttendees: String(b.expectedAttendees ?? ''),
+        });
+      } catch (err) {
+        if (!cancelled) {
+          const forbidden = err.response?.status === 403;
+          toast.error(forbidden ? 'You cannot access this booking' : 'Booking not found');
+          navigate(forbidden ? `/bookings/${bookingId}` : '/bookings', { replace: true });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    if (bookingId && user) {
+      load();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [bookingId, navigate, user]);
 
   useEffect(() => {
-    if (form.facilityId && form.date) {
-      bookingApi
-        .getByFacilityAndDate(form.facilityId, form.date)
-        .then((res) =>
-          setExistingBookings(
-            res.data.filter((b) => b.status !== 'CANCELLED' && b.status !== 'REJECTED')
+    if (!form.facilityId || !form.date || !bookingId) {
+      setExistingBookings([]);
+      return;
+    }
+    bookingApi
+      .getByFacilityAndDate(form.facilityId, form.date)
+      .then((res) =>
+        setExistingBookings(
+          (res.data || []).filter(
+            (b) =>
+              b.id !== bookingId &&
+              b.status !== 'CANCELLED' &&
+              b.status !== 'REJECTED'
           )
         )
-        .catch(() => setExistingBookings([]));
-    } else {
-      setExistingBookings([]);
-    }
-  }, [form.facilityId, form.date]);
+      )
+      .catch(() => setExistingBookings([]));
+  }, [form.facilityId, form.date, bookingId]);
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -62,6 +143,7 @@ export default function NewBookingPage() {
         date: form.date,
         startTime: form.startTime,
         endTime: form.endTime,
+        excludeBookingId: bookingId,
       });
       setAvailability(res.data);
       if (res.data.available) {
@@ -79,14 +161,18 @@ export default function NewBookingPage() {
     setSubmitting(true);
     try {
       const payload = {
-        ...form,
-        expectedAttendees: parseInt(form.expectedAttendees) || 1,
+        facilityId: form.facilityId,
+        date: form.date,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        purpose: form.purpose,
+        expectedAttendees: parseInt(form.expectedAttendees, 10) || 1,
       };
-      await bookingApi.create(payload);
-      toast.success('Booking request submitted successfully!');
-      navigate('/bookings');
+      await bookingApi.update(bookingId, payload);
+      toast.success('Booking updated successfully');
+      navigate(`/bookings/${bookingId}`);
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to create booking';
+      const message = err.response?.data?.message || err.message || 'Failed to update booking';
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -100,21 +186,30 @@ export default function NewBookingPage() {
     { num: 2, label: 'Details' },
   ];
 
+  if (loading || !user) {
+    return (
+      <div className="max-w-3xl mx-auto py-16 flex justify-center">
+        <span className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <button
-        onClick={() => navigate(-1)}
+        type="button"
+        onClick={() => navigate(`/bookings/${bookingId}`)}
         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        Back
+        Back to booking
       </button>
 
-      {/* Step Indicator */}
       <div className="flex items-center gap-3 px-2">
         {steps.map((s, i) => (
           <div key={s.num} className="flex items-center gap-3 flex-1">
             <button
+              type="button"
               onClick={() => s.num < step && setStep(s.num)}
               className={`flex items-center gap-2 ${
                 step >= s.num ? 'text-primary-600' : 'text-gray-400'
@@ -144,26 +239,28 @@ export default function NewBookingPage() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in"
+      >
         <div className="px-6 sm:px-8 py-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
-              <CalendarPlus className="w-5 h-5 text-primary-600" />
+              <Pencil className="w-5 h-5 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">New Booking</h1>
-              <p className="text-sm text-gray-500">Reserve a campus facility</p>
+              <h1 className="text-xl font-bold text-gray-900">Edit Booking</h1>
+              <p className="text-sm text-gray-500">Update facility, time, or details (pending only)</p>
             </div>
           </div>
         </div>
 
         <div className="p-6 sm:p-8 space-y-6">
-          {/* Step 1: Facility & Time Selection */}
           <div className={step === 1 ? '' : 'hidden'}>
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Select Facility <span className="text-red-500">*</span>
+                  Facility <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
@@ -232,7 +329,6 @@ export default function NewBookingPage() {
                 </div>
               </div>
 
-              {/* Time Slot Visualization */}
               {selectedFacility && form.date && (
                 <div className="pt-2">
                   <TimeSlotGrid
@@ -243,7 +339,6 @@ export default function NewBookingPage() {
                 </div>
               )}
 
-              {/* Availability Check */}
               <button
                 type="button"
                 onClick={checkAvailability}
@@ -295,7 +390,6 @@ export default function NewBookingPage() {
             </div>
           </div>
 
-          {/* Step 2: Booking Details */}
           <div className={step === 2 ? 'animate-slide-in-right' : 'hidden'}>
             <div className="space-y-5">
               {selectedFacility && (
@@ -303,7 +397,8 @@ export default function NewBookingPage() {
                   <p className="text-xs text-gray-500 mb-1">Booking Summary</p>
                   <p className="text-sm font-semibold text-gray-900">{selectedFacility.name}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {format(new Date(form.date), 'EEEE, MMMM dd, yyyy')} &middot; {form.startTime} - {form.endTime}
+                    {format(new Date(form.date), 'EEEE, MMMM dd, yyyy')} &middot; {form.startTime} -{' '}
+                    {form.endTime}
                   </p>
                 </div>
               )}
@@ -336,7 +431,7 @@ export default function NewBookingPage() {
                   placeholder={`Max: ${selectedFacility?.capacity || '—'}`}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow"
                 />
-                {selectedFacility && form.expectedAttendees > selectedFacility.capacity && (
+                {selectedFacility && Number(form.expectedAttendees) > selectedFacility.capacity && (
                   <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Exceeds facility capacity of {selectedFacility.capacity}
@@ -347,7 +442,6 @@ export default function NewBookingPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-6 sm:px-8 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
           {step === 2 && (
             <button
@@ -361,7 +455,7 @@ export default function NewBookingPage() {
           {step === 1 ? (
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/bookings/${bookingId}`)}
               className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
             >
               Cancel
@@ -376,10 +470,10 @@ export default function NewBookingPage() {
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Submitting...
+                  Saving...
                 </span>
               ) : (
-                'Submit Booking Request'
+                'Save changes'
               )}
             </button>
           )}

@@ -4,6 +4,7 @@ import com.example.demo.dto.ApiErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -57,6 +58,16 @@ public class GlobalExceptionHandler {
                 .fieldErrors(fieldErrors)
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        ApiErrorResponse response = ApiErrorResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .error("Forbidden")
+                .message(ex.getMessage() != null ? ex.getMessage() : "Access denied")
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     @ExceptionHandler(Exception.class)

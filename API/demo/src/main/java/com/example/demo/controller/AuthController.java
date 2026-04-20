@@ -38,7 +38,11 @@ public class AuthController {
         String email = oauthUser.getAttribute("email");
         if (email != null) {
             Optional<User> dbUser = userRepository.findByEmail(email);
-            dbUser.ifPresent(user -> response.put("role", user.getRole()));
+            if (dbUser.isPresent()) {
+                User user = dbUser.get();
+                response.put("role", user.getRole());
+                response.put("userId", user.getId());
+            }
         } else {
             response.put("role", "student"); // fallback
         }
