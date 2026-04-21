@@ -89,6 +89,20 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.rejectBooking(id, request));
     }
 
+    @GetMapping("/checkin/{checkInCode}")
+    public ResponseEntity<BookingResponse> getBookingByCheckInCode(
+            @PathVariable String checkInCode) {
+        return ResponseEntity.ok(bookingService.getBookingByCheckInCode(checkInCode));
+    }
+
+    @PostMapping("/checkin/{checkInCode}")
+    public ResponseEntity<BookingResponse> checkInBooking(
+            @PathVariable String checkInCode,
+            @AuthenticationPrincipal OAuth2User oauthUser) {
+        User currentUser = currentUserService.requireUser(oauthUser);
+        return ResponseEntity.ok(bookingService.checkInBooking(checkInCode, currentUser));
+    }
+
     @GetMapping("/check-availability")
     public ResponseEntity<AvailabilityResponse> checkAvailability(
             @RequestParam String facilityId,

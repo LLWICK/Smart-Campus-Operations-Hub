@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -190,6 +191,10 @@ public class BookingService {
             throw new InvalidOperationException("Cannot cancel a rejected booking");
         }
 
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new InvalidOperationException("Cannot cancel a booking that has already been checked in");
+        }
+
         booking.setStatus(BookingStatus.CANCELLED);
         Booking saved = bookingRepository.save(booking);
 
@@ -220,6 +225,7 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.APPROVED);
+        booking.setCheckInCode(UUID.randomUUID().toString());
         if (request != null && request.getReason() != null) {
             booking.setAdminReason(request.getReason());
         }
@@ -230,7 +236,7 @@ public class BookingService {
             notificationService.createNotification(
                     saved.getUserId(),
                     "BOOKING_APPROVED",
-                    "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been approved.",
+                    "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been approved. A QR code is now available for check-in.",
                     saved.getId(),
                     "BOOKING"
             );
@@ -308,6 +314,56 @@ public class BookingService {
     public List<BookingResponse> getBookingsByFacilityAndDate(String facilityId, LocalDate date) {
         return bookingRepository.findByFacilityIdAndDateOrderByStartTimeAsc(facilityId, date)
                 .stream().map(BookingResponse::fromEntity).toList();
+    }
+
+    public BookingResponse getBookingByCheckInCode(String checkInCode) {
+        Booking booking = bookingRepository.findByCheckInCode(checkInCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "checkInCode", checkInCode));
+        return BookingResponse.fromEntity(booking);
+    }
+
+    public BookingResponse checkInBooking(String checkInCode, User currentUser) {
+        Booking booking = bookingRepository.findByCheckInCode(checkInCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "checkInCode", checkInCode));
+
+        assertBookingAccess(booking, currentUser);
+
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new InvalidOperationException("This booking has already been checked in");
+        }
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new InvalidOperationException("Only APPROVED bookings can be checked in");
+        }
+
+        if (!booking.getDate().equals(LocalDate.now())) {
+            throw new InvalidOperationException("Check-in is only available on the booking date (" + booking.getDate() + ")");
+        }
+
+        LocalTime now = LocalTime.now();
+        LocalTime earliestCheckIn = booking.getStartTime().minusMinutes(30);
+        LocalTime latestCheckIn = booking.getEndTime();
+        if (now.isBefore(earliestCheckIn) || now.isAfter(latestCheckIn)) {
+            throw new InvalidOperationException(
+                    String.format("Check-in is available from %s to %s", earliestCheckIn, latestCheckIn));
+        }
+
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        Booking saved = bookingRepository.save(booking);
+
+        try {
+            notificationService.createNotification(
+                    saved.getUserId(),
+                    "BOOKING_CHECKED_IN",
+                    "You have successfully checked in for " + saved.getFacilityName() + " on " + saved.getDate() + ".",
+                    saved.getId(),
+                    "BOOKING"
+            );
+        } catch (Exception e) {
+            log.error("Failed to create notification for booking {}: {}", saved.getId(), e.getMessage());
+        }
+
+        return BookingResponse.fromEntity(saved);
     }
 
     private boolean isAdmin(User user) {

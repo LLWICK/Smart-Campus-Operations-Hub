@@ -42,6 +42,7 @@ public class Booking {
     private BookingStatus status = BookingStatus.PENDING;
 
     private String adminReason;
+    private String checkInCode;
 
     @CreatedDate
     private Instant createdAt;
