@@ -29,6 +29,14 @@ public class TicketController {
     public ResponseEntity<TicketResponse> createTicket(
             @Valid @RequestBody TicketRequest request,
             @AuthenticationPrincipal OAuth2User oauthUser) {
+        
+        // 1. Get the actual User object from the current OAuth session
+        User currentUser = currentUserService.requireUser(oauthUser);
+        
+        // 2. Set the ID manually in the request DTO before passing to service
+        // This ensures the ticket is ALWAYS linked to the person logged in
+        request.setRaisedByUserId(currentUser.getId());
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.createTicket(request));
     }
 
