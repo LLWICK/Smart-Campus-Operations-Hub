@@ -18,29 +18,36 @@ import {
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 
-// Import local data
-import { DUMMY_TICKETS } from "../dummy_data/ticket";
+// Import your API service
+import { ticketApi } from "../api/ticketAPI";
 import StatusBadge from "../components/common/StatusBadge";
 import ConfirmModal from "../components/common/ConfirmModal";
 
 export default function TicketDetailPage() {
-  const { id } = useParams(); // Matches the :id in your Route
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [ticket, setTicket] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [closeModal, setCloseModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Simulate API fetch by finding ticket by tid
-    const found = DUMMY_TICKETS.find((t) => t.tid === id);
-    if (found) {
-      setTicket(found);
-    } else {
-      toast.error("Ticket not found");
+    fetchTicketDetails();
+  }, [id]);
+
+  const fetchTicketDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await ticketApi.getById(id);
+      setTicket(response.data);
+    } catch (err) {
+      toast.error(err.message || "Ticket not found");
       navigate("/tickets");
+    } finally {
+      setLoading(false);
     }
-  }, [id, navigate]);
+  };
 
   const copyTicketId = () => {
     navigator.clipboard.writeText(ticket.tid);
@@ -49,11 +56,26 @@ export default function TicketDetailPage() {
     toast.success("ID copied to clipboard");
   };
 
-  const handleCloseTicket = () => {
-    setTicket((prev) => ({ ...prev, status: "CLOSED" }));
-    setCloseModal(false);
-    toast.success("Ticket marked as closed");
+  const handleCloseTicket = async () => {
+    try {
+      // Use your PATCH endpoint to update status in the DB
+      await ticketApi.updateStatus(ticket.tid, "CLOSED");
+
+      // Update local state to reflect change
+      setTicket((prev) => ({ ...prev, status: "CLOSED" }));
+      setCloseModal(false);
+      toast.success("Ticket marked as closed");
+    } catch (err) {
+      toast.error("Failed to close ticket: " + err.message);
+    }
   };
+
+  if (loading)
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
 
   if (!ticket) return null;
 
@@ -106,7 +128,9 @@ export default function TicketDetailPage() {
               <Clock className="w-4 h-4" />
               <span>
                 Last updated{" "}
-                {format(new Date(ticket.updatedAt), "MMM dd, HH:mm")}
+                {ticket.updatedAt
+                  ? format(new Date(ticket.updatedAt), "MMM dd, HH:mm")
+                  : "Recently"}
               </span>
             </div>
           </div>
@@ -128,11 +152,14 @@ export default function TicketDetailPage() {
             {/* Left Column: Content */}
             <div className="flex-1 space-y-8">
               <div>
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                  {ticket.category.replace("_", " ")} Inquiry
+                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight capitalize">
+                  {ticket.category.toLowerCase().replace("_", " ")} Inquiry
                 </h1>
                 <p className="mt-2 text-gray-500">
-                  Submitted on {format(new Date(ticket.createdAt), "PPPP")}
+                  Submitted on{" "}
+                  {ticket.createdAt
+                    ? format(new Date(ticket.createdAt), "PPPP")
+                    : "Date Unknown"}
                 </p>
               </div>
 
@@ -155,7 +182,7 @@ export default function TicketDetailPage() {
                 <DetailCard
                   icon={Tag}
                   label="Linked Resource ID"
-                  value={ticket.resourceId}
+                  value={ticket.resourceId || "No resource linked"}
                 />
               </div>
             </div>
@@ -167,12 +194,12 @@ export default function TicketDetailPage() {
                   icon={AlertTriangle}
                   label="Priority"
                   value={ticket.priority}
-                  variant={ticket.priority === "High" ? "red" : "blue"}
+                  variant={ticket.priority === "HIGH" ? "red" : "blue"}
                 />
                 <SidebarItem
                   icon={User}
                   label="Raised By"
-                  value={`ID: ${ticket.raisedByUserId}`}
+                  value={`ID: ${ticket.raisedByUserId?.substring(0, 10)}...`}
                 />
                 <SidebarItem
                   icon={Wrench}
@@ -210,7 +237,6 @@ export default function TicketDetailPage() {
   );
 }
 
-// Sub-components for cleaner code
 function DetailCard({ icon: Icon, label, value }) {
   return (
     <div className="p-4 border border-gray-100 rounded-2xl flex gap-4 items-start">
