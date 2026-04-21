@@ -46,6 +46,16 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getTicketById(id, currentUser));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<TicketResponse>> getTicketsByUserId(
+            @PathVariable String userId,
+            @AuthenticationPrincipal OAuth2User oauthUser) {
+        User currentUser = currentUserService.requireUser(oauthUser);
+        return ResponseEntity.ok(ticketService.getTicketsByUserId(userId, currentUser));
+    }
+
+    
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<TicketResponse> updateStatus(
