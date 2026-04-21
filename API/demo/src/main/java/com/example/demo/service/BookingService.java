@@ -15,6 +15,7 @@ import com.example.demo.model.enums.FacilityStatus;
 import com.example.demo.repository.BookingRepository;
 import com.example.demo.repository.FacilityRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -26,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -33,6 +35,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final FacilityRepository facilityRepository;
     private final MongoTemplate mongoTemplate;
+    private final NotificationService notificationService;
 
     public List<BookingResponse> getAllBookings(String userId, BookingStatus status,
                                                   String facilityId, LocalDate date, User currentUser) {
@@ -101,6 +104,19 @@ public class BookingService {
                 .build();
 
         Booking saved = bookingRepository.save(booking);
+
+        try {
+            notificationService.createNotification(
+                    saved.getUserId(),
+                    "BOOKING_CREATED",
+                    "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been submitted and is pending approval.",
+                    saved.getId(),
+                    "BOOKING"
+            );
+        } catch (Exception e) {
+            log.error("Failed to create notification for booking {}: {}", saved.getId(), e.getMessage());
+        }
+
         return BookingResponse.fromEntity(saved);
     }
 
@@ -139,6 +155,24 @@ public class BookingService {
         booking.setExpectedAttendees(request.getExpectedAttendees());
 
         Booking saved = bookingRepository.save(booking);
+
+        try {
+            boolean isAdminAction = !currentUser.getId().equals(saved.getUserId());
+            String message = isAdminAction
+                    ? "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been updated by an administrator."
+                    : "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been updated.";
+
+            notificationService.createNotification(
+                    saved.getUserId(),
+                    "BOOKING_UPDATED",
+                    message,
+                    saved.getId(),
+                    "BOOKING"
+            );
+        } catch (Exception e) {
+            log.error("Failed to create notification for booking {}: {}", saved.getId(), e.getMessage());
+        }
+
         return BookingResponse.fromEntity(saved);
     }
 
@@ -157,7 +191,24 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        try {
+            boolean isAdminAction = !currentUser.getId().equals(saved.getUserId());
+            String message = isAdminAction
+                    ? "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been cancelled by an administrator."
+                    : "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been cancelled.";
+
+            notificationService.createNotification(
+                    saved.getUserId(),
+                    "BOOKING_CANCELLED",
+                    message,
+                    saved.getId(),
+                    "BOOKING"
+            );
+        } catch (Exception e) {
+            log.error("Failed to create notification for booking {}: {}", saved.getId(), e.getMessage());
+        }
     }
 
     public BookingResponse approveBooking(String id, StatusUpdateRequest request) {
@@ -174,6 +225,19 @@ public class BookingService {
         }
 
         Booking saved = bookingRepository.save(booking);
+
+        try {
+            notificationService.createNotification(
+                    saved.getUserId(),
+                    "BOOKING_APPROVED",
+                    "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been approved.",
+                    saved.getId(),
+                    "BOOKING"
+            );
+        } catch (Exception e) {
+            log.error("Failed to create notification for booking {}: {}", saved.getId(), e.getMessage());
+        }
+
         return BookingResponse.fromEntity(saved);
     }
 
@@ -193,6 +257,19 @@ public class BookingService {
         booking.setAdminReason(request.getReason());
 
         Booking saved = bookingRepository.save(booking);
+
+        try {
+            notificationService.createNotification(
+                    saved.getUserId(),
+                    "BOOKING_REJECTED",
+                    "Your booking for " + saved.getFacilityName() + " on " + saved.getDate() + " has been rejected. Reason: " + request.getReason(),
+                    saved.getId(),
+                    "BOOKING"
+            );
+        } catch (Exception e) {
+            log.error("Failed to create notification for booking {}: {}", saved.getId(), e.getMessage());
+        }
+
         return BookingResponse.fromEntity(saved);
     }
 
