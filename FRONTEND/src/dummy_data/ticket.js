@@ -1,0 +1,43 @@
+export const DUMMY_TICKETS = [
+  {
+    tid: "TKT-6582a1b9c2",
+    description:
+      "The projector in Hall B is flickering intermittently and showing a blue tint.",
+    contactDetails: "Phone: +94 77 123 4567",
+    category: "Technical",
+    priority: "High",
+    status: "OPEN",
+    raisedByUserId: "USER_8892",
+    assignedToTechnicianId: "TECH_4431",
+    resourceId: "RES_HALL_B_PROJ",
+    createdAt: "2024-03-15T08:30:00Z",
+    updatedAt: "2024-03-15T09:45:00Z",
+  },
+  {
+    tid: "TKT-7721b5x2",
+    description: "Air conditioning in Lab 04 is making a loud grinding noise.",
+    contactDetails: "Email: lecturer@demo.com",
+    category: "Non_Technical",
+    priority: "Medium",
+    status: "IN_PROGRESS",
+    raisedByUserId: "USER_1102",
+    assignedToTechnicianId: "TECH_9921",
+    resourceId: "RES_LAB_04_AC",
+    createdAt: "2024-03-16T10:00:00Z",
+    updatedAt: "2024-03-16T11:00:00Z",
+  },
+
+  {
+    tid: "TKT-7721b5x2",
+    description: "Test_Tickets",
+    contactDetails: "Email: lecturer@demo.com",
+    category: "Non_Technical",
+    priority: "Medium",
+    status: "IN_PROGRESS",
+    raisedByUserId: "USER_1102",
+    assignedToTechnicianId: "TECH_9921",
+    resourceId: "RES_LAB_04_AC",
+    createdAt: "2024-03-16T10:00:00Z",
+    updatedAt: "2024-03-16T11:00:00Z",
+  },
+];
