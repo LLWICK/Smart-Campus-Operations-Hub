@@ -11,4 +11,6 @@ export const bookingApi = {
   checkAvailability: (params) => api.get('/bookings/check-availability', { params }),
   getByFacilityAndDate: (facilityId, date) =>
     api.get(`/bookings/facility/${facilityId}/date/${date}`),
+  getByCheckInCode: (checkInCode) => api.get(`/bookings/checkin/${checkInCode}`),
+  checkIn: (checkInCode) => api.post(`/bookings/checkin/${checkInCode}`),
 };

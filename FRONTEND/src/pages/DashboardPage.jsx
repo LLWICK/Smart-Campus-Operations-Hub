@@ -211,6 +211,7 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {[
                     { label: 'Approved', color: 'bg-emerald-500', value: stats?.approvedBookings },
+                    { label: 'Checked In', color: 'bg-blue-500', value: stats?.checkedInBookings },
                     { label: 'Pending', color: 'bg-amber-500', value: stats?.pendingBookings },
                     { label: 'Rejected', color: 'bg-red-500', value: stats?.rejectedBookings },
                     { label: 'Cancelled', color: 'bg-gray-400', value: stats?.cancelledBookings },
