@@ -27,6 +27,7 @@ public class DashboardController {
                 .totalBookings(bookingService.countAll())
                 .pendingBookings(bookingService.countByStatus(BookingStatus.PENDING))
                 .approvedBookings(bookingService.countByStatus(BookingStatus.APPROVED))
+                .checkedInBookings(bookingService.countByStatus(BookingStatus.CHECKED_IN))
                 .rejectedBookings(bookingService.countByStatus(BookingStatus.REJECTED))
                 .cancelledBookings(bookingService.countByStatus(BookingStatus.CANCELLED))
                 .build();

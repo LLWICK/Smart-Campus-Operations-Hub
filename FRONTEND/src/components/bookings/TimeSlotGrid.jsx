@@ -13,7 +13,7 @@ export default function TimeSlotGrid({ bookings = [], facilityStart = '06:00', f
 
     for (const booking of bookings) {
       if (booking.startTime < nextHourStr && booking.endTime > hourStr) {
-        if (booking.status === 'APPROVED') return 'booked';
+        if (booking.status === 'APPROVED' || booking.status === 'CHECKED_IN') return 'booked';
         if (booking.status === 'PENDING') return 'pending';
       }
     }
