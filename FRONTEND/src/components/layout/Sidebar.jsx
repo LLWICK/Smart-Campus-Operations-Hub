@@ -25,6 +25,7 @@ const adminItems = [
   { to: "/admin/facilities", icon: Settings, label: "Manage Facilities" },
   { to: "/admin/bookings", icon: Shield, label: "Manage Bookings" },
   { to: "/admin/users", icon: Users, label: "Manage Users" },
+  { to: "/admin/tickets", icon: Ticket, label: "Manage Tickets" },
 ];
 
 const technicianItems = [
