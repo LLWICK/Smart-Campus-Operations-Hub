@@ -2,6 +2,8 @@ package com.example.demo.model;
 
 import com.example.demo.model.enums.TicketCategory;
 import com.example.demo.model.enums.TicketPriorityType;
+import com.example.demo.model.enums.TicketStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +32,8 @@ public class Ticket {
     private TicketCategory category;
     
     private TicketPriorityType priority;
+
+    private TicketStatus status;
 
     // --- Relationships based on ER Diagram ---
 

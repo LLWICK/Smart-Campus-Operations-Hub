@@ -15,6 +15,7 @@ export default function StatusBadge({ status, type = 'booking' }) {
       <span
         className={clsx('w-1.5 h-1.5 rounded-full', {
           'bg-emerald-500': status === 'ACTIVE' || status === 'APPROVED',
+          'bg-blue-500': status === 'CHECKED_IN',
           'bg-amber-500': status === 'PENDING',
           'bg-red-500': status === 'OUT_OF_SERVICE' || status === 'REJECTED',
           'bg-gray-400': status === 'CANCELLED',

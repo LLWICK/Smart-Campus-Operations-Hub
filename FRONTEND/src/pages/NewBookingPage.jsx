@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { facilityApi } from '../api/facilityApi';
 import { bookingApi } from '../api/bookingApi';
 import TimeSlotGrid from '../components/bookings/TimeSlotGrid';
-import { DEFAULT_USER } from '../utils/constants';
 import { format } from 'date-fns';
 
 export default function NewBookingPage() {
@@ -82,8 +81,6 @@ export default function NewBookingPage() {
       const payload = {
         ...form,
         expectedAttendees: parseInt(form.expectedAttendees) || 1,
-        userId: DEFAULT_USER.id,
-        userName: DEFAULT_USER.name,
       };
       await bookingApi.create(payload);
       toast.success('Booking request submitted successfully!');

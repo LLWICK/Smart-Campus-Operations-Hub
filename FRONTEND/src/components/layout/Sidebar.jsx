@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
   Building2,
@@ -8,6 +9,7 @@ import {
   ChevronRight,
   Shield,
   X,
+  Users,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -20,9 +22,11 @@ const navItems = [
 const adminItems = [
   { to: '/admin/facilities', icon: Settings, label: 'Manage Facilities' },
   { to: '/admin/bookings', icon: Shield, label: 'Manage Bookings' },
+  { to: '/admin/users', icon: Users, label: 'Manage Users' },
 ];
 
 export default function Sidebar({ collapsed, setCollapsed, isMobile, onClose }) {
+  const { user } = useAuth();
   const handleNavClick = () => {
     if (isMobile && onClose) {
       onClose();
@@ -87,31 +91,33 @@ export default function Sidebar({ collapsed, setCollapsed, isMobile, onClose }) 
           ))}
         </div>
 
-        <div className="pt-3 border-t border-gray-100">
-          {(!collapsed || isMobile) && (
-            <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Admin
-            </p>
-          )}
-          {adminItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
-                  isActive
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100'
-                )
-              }
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {(!collapsed || isMobile) && <span>{item.label}</span>}
-            </NavLink>
-          ))}
-        </div>
+        {user?.role === 'admin' && (
+          <div className="pt-3 border-t border-gray-100">
+            {(!collapsed || isMobile) && (
+              <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Admin
+              </p>
+            )}
+            {adminItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={handleNavClick}
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100'
+                  )
+                }
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                {(!collapsed || isMobile) && <span>{item.label}</span>}
+              </NavLink>
+            ))}
+          </div>
+        )}
       </nav>
 
       {!isMobile && (

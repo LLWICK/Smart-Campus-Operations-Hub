@@ -19,12 +19,6 @@ public class BookingRequest {
     @NotBlank(message = "Facility ID is required")
     private String facilityId;
 
-    @NotBlank(message = "User ID is required")
-    private String userId;
-
-    @NotBlank(message = "User name is required")
-    private String userName;
-
     @NotNull(message = "Booking date is required")
     @FutureOrPresent(message = "Booking date must be today or in the future")
     private LocalDate date;
