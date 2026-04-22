@@ -29,6 +29,7 @@ public class BookingResponse {
     private int expectedAttendees;
     private BookingStatus status;
     private String adminReason;
+    private String checkInCode;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -46,6 +47,7 @@ public class BookingResponse {
                 .expectedAttendees(booking.getExpectedAttendees())
                 .status(booking.getStatus())
                 .adminReason(booking.getAdminReason())
+                .checkInCode(booking.getCheckInCode())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
                 .build();

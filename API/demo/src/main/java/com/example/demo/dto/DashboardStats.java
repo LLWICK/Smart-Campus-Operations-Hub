@@ -16,6 +16,7 @@ public class DashboardStats {
     private long totalBookings;
     private long pendingBookings;
     private long approvedBookings;
+    private long checkedInBookings;
     private long rejectedBookings;
     private long cancelledBookings;
 }

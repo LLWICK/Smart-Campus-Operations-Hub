@@ -7,6 +7,7 @@ import BookingsPage from "./pages/BookingsPage";
 import NewBookingPage from "./pages/NewBookingPage";
 import BookingDetailPage from "./pages/BookingDetailPage";
 import EditBookingPage from "./pages/EditBookingPage";
+import CheckInPage from "./pages/CheckInPage";
 import ManageFacilitiesPage from "./pages/ManageFacilitiesPage";
 import ManageBookingsPage from "./pages/ManageBookingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="bookings/new" element={<NewBookingPage />} />
         <Route path="bookings/new/:facilityId" element={<NewBookingPage />} />
         <Route path="bookings/:id/edit" element={<EditBookingPage />} />
+        <Route path="bookings/checkin/:checkInCode" element={<CheckInPage />} />
         <Route path="bookings/:id" element={<BookingDetailPage />} />
 
         {/* Admin Routes */}
