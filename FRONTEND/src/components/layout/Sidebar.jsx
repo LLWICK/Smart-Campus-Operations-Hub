@@ -29,7 +29,11 @@ const adminItems = [
 ];
 
 const technicianItems = [
-  { to: "/tickets", icon: ClipboardList, label: "Assigned Tickets" },
+  {
+    to: "technician/tickets",
+    icon: ClipboardList,
+    label: "Assigned Tickets",
+  },
 ];
 
 // Student / Lecturer: Facilities + My Bookings live under Main only; Services is for support tickets
