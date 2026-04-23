@@ -32,10 +32,8 @@ const technicianItems = [
   { to: "/tickets", icon: ClipboardList, label: "Assigned Tickets" },
 ];
 
-// Student / Lecturer specific links
+// Student / Lecturer: Facilities + My Bookings live under Main only; Services is for support tickets
 const studentItems = [
-  { to: "/facilities", icon: Building2, label: "Facilities" },
-  { to: "/bookings", icon: CalendarRange, label: "My Bookings" },
   { to: "/tickets", icon: Ticket, label: "My Support Tickets" },
 ];
 
