@@ -64,7 +64,7 @@ export default function FacilityForm({ isOpen, onClose, onSubmit, initialData })
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-white/70 backdrop-blur-[1px]" onClick={onClose} />
       <div className="relative w-full sm:max-w-lg bg-white h-full shadow-xl overflow-y-auto animate-slide-in-right">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">

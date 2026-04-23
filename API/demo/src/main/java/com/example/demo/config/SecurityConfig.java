@@ -35,6 +35,15 @@ public class SecurityConfig {
                         // If your React app is running on 3000, change this URL!
                         .defaultSuccessUrl("http://localhost:5173/", true)
                         .failureUrl("http://localhost:5173/login?error=true")
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(200);
+                        })
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
                 );
 
         return http.build();

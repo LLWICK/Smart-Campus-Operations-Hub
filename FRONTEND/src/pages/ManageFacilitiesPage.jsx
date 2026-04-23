@@ -88,6 +88,7 @@ export default function ManageFacilitiesPage() {
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="Manage Facilities"
+        titleClassName="text-indigo-700 tracking-tight"
         description="Add, edit, and manage campus facilities"
         action={
           <button
