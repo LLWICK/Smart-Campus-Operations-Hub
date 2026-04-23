@@ -41,6 +41,20 @@ public class TicketService {
                 .map(TicketResponse::fromEntity).toList();
     }
 
+    public List<TicketResponse> getTicketsByUserId(String targetUserId, User currentUser) {
+    // Security: Only Admins/Techs can view anyone's tickets. 
+    // Regular users can only request their own ID.
+    if (!isAdminOrTech(currentUser) && !currentUser.getId().equals(targetUserId)) {
+        throw new AccessDeniedException("You do not have permission to view these tickets.");
+    }
+
+    return ticketRepository.findByRaisedByUserId(targetUserId)
+            .stream()
+            .map(TicketResponse::fromEntity)
+            .toList();
+}
+
+
     public TicketResponse getTicketById(String id, User currentUser) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));

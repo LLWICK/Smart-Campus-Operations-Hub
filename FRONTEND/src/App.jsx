@@ -17,6 +17,9 @@ import AdminRoute from "./auth/AdminRoute";
 import ManageUsersPage from "./pages/ManageUsersPage";
 import TicketDetailPage from "./pages/TicketDetails";
 import TicketDashboardPage from "./pages/TicketDashboard";
+import TicketTestPage from "./pages/TicketTestPage";
+import NewTicketPage from "./pages/NewTicketPage";
+import AdminTicketDashboardPage from "./pages/AdminTicketDashboardPage";
 
 export default function App() {
   return (
@@ -55,6 +58,9 @@ export default function App() {
         {/* Ticket Routes */}
         <Route path="tickets" element={<TicketDashboardPage />} />
         <Route path="tickets/:id" element={<TicketDetailPage />} />
+        <Route path="tickets/test" element={<TicketTestPage />} />
+        <Route path="tickets/new" element={<NewTicketPage />} />
+        <Route path="admin/tickets" element={<AdminTicketDashboardPage />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>

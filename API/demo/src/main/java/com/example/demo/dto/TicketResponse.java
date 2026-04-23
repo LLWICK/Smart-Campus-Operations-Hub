@@ -3,6 +3,8 @@ package com.example.demo.dto;
 import com.example.demo.model.Ticket;
 import com.example.demo.model.enums.TicketCategory;
 import com.example.demo.model.enums.TicketPriorityType;
+import com.example.demo.model.enums.TicketStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +23,7 @@ public class TicketResponse {
     private String contactDetails;
     private TicketCategory category;
     private TicketPriorityType priority;
+    private TicketStatus status;
     
     private String raisedByUserId;
     private String assignedToTechnicianId;
@@ -36,6 +39,7 @@ public class TicketResponse {
                 .contactDetails(ticket.getContactDetails())
                 .category(ticket.getCategory())
                 .priority(ticket.getPriority())
+                .status(ticket.getStatus())
                 .raisedByUserId(ticket.getRaisedByUserId())
                 .assignedToTechnicianId(ticket.getAssignedToTechnicianId())
                 .resourceId(ticket.getResourceId())
