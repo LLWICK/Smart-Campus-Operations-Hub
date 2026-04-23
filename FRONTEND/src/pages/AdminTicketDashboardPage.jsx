@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Wrench,
   Clock,
   CheckCircle2,
   Lock,
   Search,
-  Filter,
   ArrowRight,
   TrendingUp,
   Sparkles,
   UserCheck,
   ClipboardList,
   AlertCircle,
+  ExternalLink,
+  FilterX,
 } from "lucide-react";
 import { adminApi } from "../api/admiTApi";
 import StatusBadge from "../components/common/StatusBadge";
@@ -21,6 +22,7 @@ import { StatCardSkeleton } from "../components/common/Skeleton";
 import toast from "react-hot-toast";
 
 export default function AdminTicketDashboard() {
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,12 +30,11 @@ export default function AdminTicketDashboard() {
 
   useEffect(() => {
     loadData();
-    console.log(stats);
   }, []);
 
   const loadData = async () => {
     try {
-      setLoading(true);
+      setLoading(false); // Optimization: Start loading
       const [ticketData, userData] = await Promise.all([
         adminApi.getAllTickets(),
         adminApi.getUsers(),
@@ -50,9 +51,10 @@ export default function AdminTicketDashboard() {
   };
 
   const handleAssign = async (ticketId, techId) => {
+    if (!techId) return;
     try {
       await adminApi.assignTechnician(ticketId, techId);
-      toast.success("Technician assigned & Status moved to In Progress");
+      toast.success("Technician assigned & Work In Progress");
       loadData();
     } catch (err) {
       toast.error("Assignment failed");
@@ -62,17 +64,16 @@ export default function AdminTicketDashboard() {
   const handleStatusUpdate = async (ticketId, status) => {
     try {
       await adminApi.updateTicketStatus(ticketId, status);
-      toast.success(`Ticket marked as ${status}`);
+      toast.success(`Marked as ${status}`);
       loadData();
     } catch (err) {
       toast.error("Update failed");
     }
   };
 
-  // Stats Logic mapping to your TicketStatus Enum
+  // Stats Logic mapping to TicketStatus Enum
   const stats = {
     total: tickets.length,
-    // Use .toUpperCase() to ensure it matches the Java Enum exactly
     open: tickets.filter((t) => t.status?.toUpperCase() === "OPEN").length,
     inProgress: tickets.filter((t) => t.status?.toUpperCase() === "IN_PROGRESS")
       .length,
@@ -115,7 +116,10 @@ export default function AdminTicketDashboard() {
   const filteredTickets = tickets.filter(
     (t) =>
       t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.tid?.toLowerCase().includes(searchTerm.toLowerCase()),
+      t.tid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.assignedToTechnicianId
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -133,12 +137,12 @@ export default function AdminTicketDashboard() {
             Admin Ticket Manager
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Monitor lifecycle from OPEN to CLOSED.
+            Monitor and manage the entire maintenance lifecycle.
           </p>
         </div>
       </div>
 
-      {/* 1. Stat Cards Row */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
@@ -158,7 +162,7 @@ export default function AdminTicketDashboard() {
                   <TrendingUp className="w-4 h-4 text-gray-200" />
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
                     {card.title}
                   </p>
                   <p className="text-3xl font-black text-gray-900 mt-1">
@@ -170,117 +174,121 @@ export default function AdminTicketDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* 2. Ticket Management Table */}
+        {/* Ticket Management Table */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50/30">
+          <div className="bg-white rounded-[2rem] shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between bg-gray-50/30">
               <div className="relative max-w-sm w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Filter by description or ID..."
+                  placeholder="Search by ID, Tech, or Detail..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary-600 outline-none bg-white transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-4 focus:ring-primary-500/10 outline-none transition-all"
                 />
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500 bg-white px-4 py-1.5 rounded-xl border border-gray-200">
                 <ClipboardList className="w-4 h-4 text-primary-500" />
-                {filteredTickets.length} TOTAL
+                {filteredTickets.length} TICKETS FOUND
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-400 font-bold border-b border-gray-100 uppercase text-[10px] tracking-widest">
+                <thead className="bg-gray-50/50 text-gray-400 font-bold border-b border-gray-100 uppercase text-[10px] tracking-widest">
                   <tr>
                     <th className="px-6 py-4">Request Detail</th>
-                    <th className="px-6 py-4">Technician</th>
-                    <th className="px-6 py-4 text-right">Update Status</th>
+                    <th className="px-6 py-4">Assignment</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredTickets.map((ticket) => (
-                    <tr
-                      key={ticket.tid}
-                      className="hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <StatusBadge status={ticket.status} />
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-900 truncate max-w-[180px]">
-                              {ticket.description}
-                            </p>
-                            <p className="text-[10px] text-gray-400 mt-0.5 tracking-widest">
-                              #{ticket.tid.substring(0, 8)}
-                            </p>
+                  {filteredTickets.length > 0 ? (
+                    filteredTickets.map((ticket) => (
+                      <tr
+                        key={ticket.tid}
+                        className="hover:bg-gray-50/50 transition-colors group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <StatusBadge status={ticket.status} />
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-900 truncate max-w-[200px] group-hover:text-primary-600 transition-colors">
+                                {ticket.description}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-0.5 font-mono">
+                                #{ticket.tid.substring(0, 12)}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="relative">
-                          <UserCheck className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                          <select
-                            className="pl-8 pr-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-primary-500 outline-none appearance-none cursor-pointer"
-                            value={ticket.assignedToTechnicianId || ""}
-                            onChange={(e) =>
-                              handleAssign(ticket.tid, e.target.value)
-                            }
-                          >
-                            <option value="">Select Tech...</option>
-                            {technicians.map((tech) => (
-                              <option key={tech.id} value={tech.id}>
-                                {tech.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(ticket.tid, "IN_PROGRESS")
-                            }
-                            className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-all"
-                            title="Set In Progress"
-                          >
-                            <Clock className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(ticket.tid, "RESOLVED")
-                            }
-                            className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-all"
-                            title="Mark Resolved"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(ticket.tid, "CLOSED")
-                            }
-                            className="p-2 hover:bg-gray-100 text-gray-600 rounded-lg transition-all"
-                            title="Close Ticket"
-                          >
-                            <Lock className="w-4 h-4" />
-                          </button>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="relative max-w-[140px]">
+                            <UserCheck className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                            <select
+                              className="w-full pl-8 pr-2 py-1.5 border border-gray-200 rounded-lg text-[11px] font-bold bg-white focus:ring-2 focus:ring-primary-500 outline-none appearance-none cursor-pointer"
+                              value={ticket.assignedToTechnicianId || ""}
+                              onChange={(e) =>
+                                handleAssign(ticket.tid, e.target.value)
+                              }
+                            >
+                              <option value="">Unassigned</option>
+                              {technicians.map((tech) => (
+                                <option key={tech.id} value={tech.id}>
+                                  {tech.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end items-center gap-1">
+                            <button
+                              onClick={() =>
+                                handleStatusUpdate(ticket.tid, "RESOLVED")
+                              }
+                              className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-all"
+                              title="Resolve"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                navigate(`/admin/tickets/${ticket.tid}`)
+                              }
+                              className="p-2 hover:bg-primary-50 text-primary-600 rounded-lg transition-all"
+                              title="Full Detail"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-20 text-center">
+                        <div className="flex flex-col items-center gap-2 opacity-30">
+                          <FilterX className="w-12 h-12" />
+                          <p className="font-bold uppercase tracking-widest text-xs">
+                            No matching tickets
+                          </p>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* 3. Sidebar Breakdown */}
+        {/* Sidebar Status Breakdown */}
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-            <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6">
-              Status Pipeline
+          <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm">
+            <h2 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-6">
+              Pipeline Health
             </h2>
             <div className="space-y-5">
               {[
@@ -299,16 +307,16 @@ export default function AdminTicketDashboard() {
               ].map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-gray-500 tracking-tighter">
+                    <span className="text-[10px] font-black text-gray-400 tracking-wider">
                       {item.label}
                     </span>
                     <span className="text-xs font-black text-gray-900">
                       {item.val}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-50 rounded-full h-2 overflow-hidden border border-gray-100">
+                  <div className="w-full bg-gray-50 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className={`h-full ${item.color} transition-all duration-1000 ease-out shadow-sm`}
+                      className={`h-full ${item.color} transition-all duration-1000 ease-out`}
                       style={{
                         width: `${stats.total ? (item.val / stats.total) * 100 : 0}%`,
                       }}
@@ -319,21 +327,30 @@ export default function AdminTicketDashboard() {
             </div>
           </div>
 
-          {/* Quick Stats Helper */}
-          <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-3xl p-6 text-white shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-md">
-                <TrendingUp className="w-5 h-5 text-white" />
+          {/* Quick Insights Card */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+            <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-white/5 rotate-12" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-primary-500 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="font-bold text-sm tracking-tight">
+                  Daily Insight
+                </h3>
               </div>
-              <h3 className="font-bold">Efficiency Check</h3>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                {stats.open > 0
+                  ? `There are ${stats.open} tickets waiting for a technician. High priority for unassigned requests is recommended.`
+                  : "All tickets are currently being handled or resolved. Great job!"}
+              </p>
+              <button
+                onClick={() => navigate("/admin/users")}
+                className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary-400 hover:text-primary-300 transition-colors"
+              >
+                Manage Staff <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
-            <p className="text-primary-100 text-xs leading-relaxed">
-              {stats.open > 5
-                ? "⚠️ High volume of unassigned tickets detected."
-                : "✅ Ticket flow is currently stable."}
-              Assign technicians to "OPEN" tickets to begin the resolution
-              process.
-            </p>
           </div>
         </div>
       </div>

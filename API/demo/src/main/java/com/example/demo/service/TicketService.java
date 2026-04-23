@@ -72,6 +72,7 @@ public class TicketService {
         return TicketResponse.fromEntity(ticketRepository.save(ticket));
     }
 
+
     public TicketResponse assignToTechnician(String id, String technicianId) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
@@ -92,4 +93,26 @@ public class TicketService {
         }
         throw new AccessDeniedException("You do not have access to this ticket");
     }
+
+    public TicketResponse updateAdminResponse(String id, String response) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
+        ticket.setAdminResponse(response);
+        return TicketResponse.fromEntity(ticketRepository.save(ticket));
+    }
+
+    public TicketResponse updateTechnicianFeedback(String id, String feedback, User currentUser) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
+
+        // Security: Only the assigned technician or an Admin can leave technical feedback
+        if (!isAdminOrTech(currentUser)) {
+            throw new AccessDeniedException("Only staff can provide technical feedback.");
+        }
+
+        ticket.setTechnicianFeedback(feedback);
+        return TicketResponse.fromEntity(ticketRepository.save(ticket));
+    }
+
+    
 }
