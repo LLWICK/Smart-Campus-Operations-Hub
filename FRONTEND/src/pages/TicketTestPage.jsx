@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-// Import the API service
+// Import your dummy data
 import { ticketApi } from "../api/ticketAPI";
 
 // Import your existing components
@@ -25,45 +25,44 @@ import {
   BookingCardSkeleton as TicketCardSkeleton,
 } from "../components/common/Skeleton";
 
-export default function TicketDashboardPage() {
+export default function TicketTestPage() {
   const [stats, setStats] = useState(null);
   const [recentTickets, setRecentTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
+    const fetchData = async () => {
       setLoading(true);
-      setError(null);
+      try {
+        // 1. Fetch data from your Spring Boot API
+        const response = await ticketApi.getAll();
+        const tickets = response.data;
 
-      // Fetch all tickets based on user role (logic handled by your backend)
-      const response = await ticketApi.getAll();
-      const tickets = response.data;
+        // 2. Calculate stats from the LIVE data
+        // Note: Ensure your Enum cases match exactly (e.g., "OPEN" vs "Open")
+        const calculatedStats = {
+          totalTickets: tickets.length,
+          openTickets: tickets.filter((t) => t.status === "OPEN").length,
+          inProgress: tickets.filter((t) => t.status === "IN_PROGRESS").length,
+          resolved: tickets.filter(
+            (t) => t.status === "RESOLVED" || t.status === "CLOSED",
+          ).length,
+          highPriority: tickets.filter((t) => t.priority === "HIGH").length,
+        };
 
-      // Calculate real-time stats from the API response
-      const calculatedStats = {
-        totalTickets: tickets.length,
-        openTickets: tickets.filter((t) => t.status === "OPEN").length,
-        inProgress: tickets.filter((t) => t.status === "IN_PROGRESS").length,
-        resolved: tickets.filter(
-          (t) => t.status === "RESOLVED" || t.status === "CLOSED",
-        ).length,
-        highPriority: tickets.filter((t) => t.priority === "HIGH").length,
-      };
+        // 3. Update state
+        setStats(calculatedStats);
+        setRecentTickets(tickets.slice(0, 5));
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error.message);
+        // Optional: Set some default empty stats so the UI doesn't break
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setStats(calculatedStats);
-      setRecentTickets(tickets.slice(0, 5)); // Get 5 most recent
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError("Failed to load support metrics. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, []);
 
   const statCards = [
     {
@@ -119,12 +118,6 @@ export default function TicketDashboardPage() {
         </Link>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
-
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
@@ -156,7 +149,7 @@ export default function TicketDashboardPage() {
 
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Tickets List */}
+        {/* Recent Tickets */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -185,7 +178,7 @@ export default function TicketDashboardPage() {
                 </p>
               </div>
             ) : (
-              recentTickets.map((ticket) => (
+              recentTickets.map((ticket, index) => (
                 <Link
                   key={ticket.tid}
                   to={`/tickets/${ticket.tid}`}
@@ -200,21 +193,14 @@ export default function TicketDashboardPage() {
                         {ticket.description}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        #{ticket.tid.substring(0, 8)} &middot; {ticket.category}{" "}
-                        &middot;{" "}
-                        {ticket.createdAt
-                          ? format(new Date(ticket.createdAt), "MMM dd")
-                          : "N/A"}
+                        #{ticket.tid} &middot; {ticket.category} &middot;{" "}
+                        {format(new Date(ticket.createdAt), "MMM dd")}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div
-                      className={`hidden sm:block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                        ticket.priority === "HIGH"
-                          ? "bg-red-50 text-red-600"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`hidden sm:block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${ticket.priority === "High" ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-600"}`}
                     >
                       {ticket.priority}
                     </div>
@@ -228,7 +214,7 @@ export default function TicketDashboardPage() {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
-          {/* Status Breakdown Chart */}
+          {/* Status Breakdown */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Ticket Status
@@ -238,17 +224,17 @@ export default function TicketDashboardPage() {
                 {
                   label: "Open",
                   color: "bg-blue-500",
-                  value: stats?.openTickets || 0,
+                  value: stats?.openTickets,
                 },
                 {
                   label: "In Progress",
                   color: "bg-amber-500",
-                  value: stats?.inProgress || 0,
+                  value: stats?.inProgress,
                 },
                 {
                   label: "Resolved",
                   color: "bg-emerald-500",
-                  value: stats?.resolved || 0,
+                  value: stats?.resolved,
                 },
               ].map((item) => (
                 <div key={item.label}>
@@ -262,7 +248,7 @@ export default function TicketDashboardPage() {
                       </span>
                     </div>
                     <span className="text-sm font-bold text-gray-900">
-                      <AnimatedCounter value={item.value} />
+                      <AnimatedCounter value={item.value || 0} />
                     </span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
@@ -306,6 +292,7 @@ export default function TicketDashboardPage() {
   );
 }
 
+// Helper component for Sidebar Actions
 function SidebarAction({ to, icon: Icon, title, desc, color }) {
   return (
     <Link

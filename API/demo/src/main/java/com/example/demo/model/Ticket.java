@@ -30,6 +30,9 @@ public class Ticket {
     private String contactDetails; // Mapped from Contact_Details in ER
 
     private TicketCategory category;
+
+    private String adminResponse;      // Official response to the user
+    private String technicianFeedback; // Technical notes from the repairer
     
     private TicketPriorityType priority;
 

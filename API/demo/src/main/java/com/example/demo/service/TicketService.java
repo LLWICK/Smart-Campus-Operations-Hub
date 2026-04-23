@@ -41,6 +41,20 @@ public class TicketService {
                 .map(TicketResponse::fromEntity).toList();
     }
 
+    public List<TicketResponse> getTicketsByUserId(String targetUserId, User currentUser) {
+    // Security: Only Admins/Techs can view anyone's tickets. 
+    // Regular users can only request their own ID.
+    if (!isAdminOrTech(currentUser) && !currentUser.getId().equals(targetUserId)) {
+        throw new AccessDeniedException("You do not have permission to view these tickets.");
+    }
+
+    return ticketRepository.findByRaisedByUserId(targetUserId)
+            .stream()
+            .map(TicketResponse::fromEntity)
+            .toList();
+}
+
+
     public TicketResponse getTicketById(String id, User currentUser) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
@@ -57,6 +71,7 @@ public class TicketService {
         ticket.setStatus(status);
         return TicketResponse.fromEntity(ticketRepository.save(ticket));
     }
+
 
     public TicketResponse assignToTechnician(String id, String technicianId) {
         Ticket ticket = ticketRepository.findById(id)
@@ -78,4 +93,26 @@ public class TicketService {
         }
         throw new AccessDeniedException("You do not have access to this ticket");
     }
+
+    public TicketResponse updateAdminResponse(String id, String response) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
+        ticket.setAdminResponse(response);
+        return TicketResponse.fromEntity(ticketRepository.save(ticket));
+    }
+
+    public TicketResponse updateTechnicianFeedback(String id, String feedback, User currentUser) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
+
+        // Security: Only the assigned technician or an Admin can leave technical feedback
+        if (!isAdminOrTech(currentUser)) {
+            throw new AccessDeniedException("Only staff can provide technical feedback.");
+        }
+
+        ticket.setTechnicianFeedback(feedback);
+        return TicketResponse.fromEntity(ticketRepository.save(ticket));
+    }
+
+    
 }

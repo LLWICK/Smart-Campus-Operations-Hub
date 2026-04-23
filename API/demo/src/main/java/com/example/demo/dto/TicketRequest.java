@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+// package com.example.demo.dto;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,12 +26,11 @@ public class TicketRequest {
 
     private String contactDetails;
 
-    @NotBlank(message = "User ID (Raiser) is required")
-    private String raisedByUserId;
+    // REMOVE @NotBlank HERE
+    // We allow this to be null/blank in the JSON because the Controller fills it.
+    private String raisedByUserId; 
 
-    // Optional: A ticket might not always be linked to a specific physical resource
     private String resourceId;
     
-    // Optional: Can be null during creation if not yet assigned
     private String assignedToTechnicianId;
 }

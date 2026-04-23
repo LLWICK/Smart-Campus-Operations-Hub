@@ -29,6 +29,14 @@ public class TicketController {
     public ResponseEntity<TicketResponse> createTicket(
             @Valid @RequestBody TicketRequest request,
             @AuthenticationPrincipal OAuth2User oauthUser) {
+        
+        // 1. Get the actual User object from the current OAuth session
+        User currentUser = currentUserService.requireUser(oauthUser);
+        
+        // 2. Set the ID manually in the request DTO before passing to service
+        // This ensures the ticket is ALWAYS linked to the person logged in
+        request.setRaisedByUserId(currentUser.getId());
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.createTicket(request));
     }
 
@@ -46,6 +54,16 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getTicketById(id, currentUser));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<TicketResponse>> getTicketsByUserId(
+            @PathVariable String userId,
+            @AuthenticationPrincipal OAuth2User oauthUser) {
+        User currentUser = currentUserService.requireUser(oauthUser);
+        return ResponseEntity.ok(ticketService.getTicketsByUserId(userId, currentUser));
+    }
+
+    
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<TicketResponse> updateStatus(
@@ -62,5 +80,24 @@ public class TicketController {
             @PathVariable String id,
             @PathVariable String techId) {
         return ResponseEntity.ok(ticketService.assignToTechnician(id, techId));
+    }
+
+    @PatchMapping("/{id}/admin-response")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TicketResponse> updateAdminResponse(
+            @PathVariable String id,
+            @RequestBody String response) {
+        return ResponseEntity.ok(ticketService.updateAdminResponse(id, response));
+    }
+
+    // 2. Technician Technical Feedback
+    @PatchMapping("/{id}/tech-feedback")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<TicketResponse> updateTechFeedback(
+            @PathVariable String id,
+            @RequestBody String feedback,
+            @AuthenticationPrincipal OAuth2User oauthUser) {
+        User currentUser = currentUserService.requireUser(oauthUser);
+        return ResponseEntity.ok(ticketService.updateTechnicianFeedback(id, feedback, currentUser));
     }
 }
