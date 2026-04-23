@@ -14,11 +14,14 @@ import {
   AlertTriangle,
   Phone,
   Clock,
+  MessageSquareQuote,
+  ShieldCheck,
+  CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 
-// Import your API service
+// APIs
 import { ticketApi } from "../api/ticketAPI";
 import StatusBadge from "../components/common/StatusBadge";
 import ConfirmModal from "../components/common/ConfirmModal";
@@ -58,10 +61,7 @@ export default function TicketDetailPage() {
 
   const handleCloseTicket = async () => {
     try {
-      // Use your PATCH endpoint to update status in the DB
       await ticketApi.updateStatus(ticket.tid, "CLOSED");
-
-      // Update local state to reflect change
       setTicket((prev) => ({ ...prev, status: "CLOSED" }));
       setCloseModal(false);
       toast.success("Ticket marked as closed");
@@ -163,6 +163,7 @@ export default function TicketDetailPage() {
                 </p>
               </div>
 
+              {/* Problem Description */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-gray-900 font-bold">
                   <MessageSquare className="w-5 h-5 text-primary-500" />
@@ -173,6 +174,51 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
+              {/* RESOLUTION SECTION: Show when Admin or Tech provides feedback */}
+              {(ticket.adminResponse || ticket.technicianFeedback) && (
+                <div className="space-y-4 pt-6 border-t border-gray-100 animate-in slide-in-from-top-2 duration-700">
+                  <div className="flex items-center gap-2 text-gray-900 font-bold">
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    <h2>Official Updates & Resolution</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Official Admin Response Card */}
+                    {ticket.adminResponse && (
+                      <div className="bg-primary-50/50 border border-primary-100 rounded-2xl p-6 relative overflow-hidden group hover:bg-primary-50 transition-colors">
+                        <ShieldCheck className="absolute -right-2 -top-2 w-12 h-12 text-primary-500/10 rotate-12" />
+                        <div className="flex items-center gap-2 mb-2">
+                          <MessageSquareQuote className="w-4 h-4 text-primary-600" />
+                          <span className="text-xs font-black text-primary-700 uppercase tracking-widest">
+                            Message from Support Team
+                          </span>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed italic">
+                          "{ticket.adminResponse}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Technical Feedback Card */}
+                    {ticket.technicianFeedback && (
+                      <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6 relative overflow-hidden group hover:bg-emerald-50 transition-colors">
+                        <Wrench className="absolute -right-2 -top-2 w-12 h-12 text-emerald-500/10 -rotate-12" />
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">
+                            Technical Work Performed
+                          </span>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed italic">
+                          "{ticket.technicianFeedback}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Contact and Resource Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DetailCard
                   icon={Phone}
@@ -194,7 +240,11 @@ export default function TicketDetailPage() {
                   icon={AlertTriangle}
                   label="Priority"
                   value={ticket.priority}
-                  variant={ticket.priority === "HIGH" ? "red" : "blue"}
+                  variant={
+                    ticket.priority === "HIGH" || ticket.priority === "CRITICAL"
+                      ? "red"
+                      : "blue"
+                  }
                 />
                 <SidebarItem
                   icon={User}
@@ -203,8 +253,8 @@ export default function TicketDetailPage() {
                 />
                 <SidebarItem
                   icon={Wrench}
-                  label="Technician"
-                  value={ticket.assignedToTechnicianId || "Waiting Assignment"}
+                  label="Assigned Technician"
+                  value={ticket.assignedToTechnicianId || "Awaiting Assignment"}
                 />
 
                 <hr className="border-gray-200" />
@@ -229,7 +279,7 @@ export default function TicketDetailPage() {
         onClose={() => setCloseModal(false)}
         onConfirm={handleCloseTicket}
         title="Finalize Ticket"
-        message="Are you sure this issue is resolved? Closing the ticket will notify the requester."
+        message="Are you sure this issue is resolved? Closing the ticket will mark it as complete in your records."
         confirmText="Yes, Close Ticket"
         variant="danger"
       />
@@ -237,9 +287,10 @@ export default function TicketDetailPage() {
   );
 }
 
+// Helper Components
 function DetailCard({ icon: Icon, label, value }) {
   return (
-    <div className="p-4 border border-gray-100 rounded-2xl flex gap-4 items-start">
+    <div className="p-4 border border-gray-100 rounded-2xl flex gap-4 items-start bg-white shadow-sm">
       <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
         <Icon className="w-5 h-5" />
       </div>
