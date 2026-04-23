@@ -6,11 +6,17 @@ const handleResponse = async (res) => {
     const error = await res.text();
     throw new Error(error || "API Request failed");
   }
-  return res.json();
+  // Some patch requests might return a JSON body, others might be empty
+  // This handles both cases safely
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return res.json();
+  }
+  return res;
 };
 
 export const adminApi = {
-  // User Management
+  // --- Existing User Management ---
   getUsers: () =>
     fetch(`${BASE_URL}/admin/users`, { credentials: "include" }).then(
       handleResponse,
@@ -24,7 +30,7 @@ export const adminApi = {
       body: JSON.stringify(userData),
     }).then(handleResponse),
 
-  // Ticket Management
+  // --- Existing Ticket Management ---
   getAllTickets: () =>
     fetch(`${BASE_URL}/tickets`, { credentials: "include" }).then(
       handleResponse,
@@ -40,5 +46,31 @@ export const adminApi = {
     fetch(`${BASE_URL}/tickets/${ticketId}/status?status=${status}`, {
       method: "PATCH",
       credentials: "include",
+    }).then(handleResponse),
+
+  // --- NEW: Admin & Tech Feedback Management ---
+
+  /**
+   * Updates the official response visible to the student/lecturer.
+   * Targets: @PatchMapping("/{id}/admin-response")
+   */
+  updateAdminResponse: (ticketId, responseText) =>
+    fetch(`${BASE_URL}/tickets/${ticketId}/admin-response`, {
+      method: "PATCH",
+      headers: { "Content-Type": "text/plain" }, // Matches @RequestBody String in Spring Boot
+      credentials: "include",
+      body: responseText,
+    }).then(handleResponse),
+
+  /**
+   * Updates internal technical notes.
+   * Targets: @PatchMapping("/{id}/tech-feedback")
+   */
+  updateTechFeedback: (ticketId, feedbackText) =>
+    fetch(`${BASE_URL}/tickets/${ticketId}/tech-feedback`, {
+      method: "PATCH",
+      headers: { "Content-Type": "text/plain" },
+      credentials: "include",
+      body: feedbackText,
     }).then(handleResponse),
 };
