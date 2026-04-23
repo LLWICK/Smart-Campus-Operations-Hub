@@ -21,6 +21,8 @@ import TicketTestPage from "./pages/TicketTestPage";
 import NewTicketPage from "./pages/NewTicketPage";
 import AdminTicketDashboardPage from "./pages/AdminTicketDashboardPage";
 import AdminTicketDetailPage from "./pages/AdminTicketDetailPage";
+import TechTicketDashboard from "./pages/TechTicketDashboardPage";
+import TechnicianResolutionPage from "./pages/TechnicianResolutionPage";
 
 export default function App() {
   return (
@@ -63,6 +65,13 @@ export default function App() {
         <Route path="tickets/new" element={<NewTicketPage />} />
         <Route path="admin/tickets" element={<AdminTicketDashboardPage />} />
         <Route path="admin/tickets/:id" element={<AdminTicketDetailPage />} />
+
+        {/* Technician Routes*/}
+        <Route path="technician/tickets" element={<TechTicketDashboard />} />
+        <Route
+          path="/technician/ticket/:id"
+          element={<TechnicianResolutionPage />}
+        />
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>

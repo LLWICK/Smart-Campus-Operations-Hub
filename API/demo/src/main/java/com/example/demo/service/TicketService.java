@@ -101,17 +101,30 @@ public class TicketService {
         return TicketResponse.fromEntity(ticketRepository.save(ticket));
     }
 
-    public TicketResponse updateTechnicianFeedback(String id, String feedback, User currentUser) {
+    public TicketResponse updateTechnicianFeedback(String id, String feedback, User user) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket", "id", id));
 
-        // Security: Only the assigned technician or an Admin can leave technical feedback
-        if (!isAdminOrTech(currentUser)) {
-            throw new AccessDeniedException("Only staff can provide technical feedback.");
+        // Security check: Only the assigned tech (or admin) can update feedback
+        if (!user.getRole().equals("ADMIN") && !ticket.getAssignedToTechnicianId().equals(user.getId())) {
+            throw new AccessDeniedException("You are not assigned to this ticket.");
         }
 
         ticket.setTechnicianFeedback(feedback);
+        
+        // Auto-update status to RESOLVED if feedback is provided
+        if (ticket.getStatus() == TicketStatus.IN_PROGRESS || ticket.getStatus() == TicketStatus.OPEN) {
+            ticket.setStatus(TicketStatus.RESOLVED);
+        }
+
         return TicketResponse.fromEntity(ticketRepository.save(ticket));
+}
+
+    public List<TicketResponse> getTicketsByTechnician(String technicianId) {
+        return ticketRepository.findByAssignedToTechnicianId(technicianId)
+                .stream()
+                .map(TicketResponse::fromEntity)
+                .toList();
     }
 
     
