@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { ticketApi } from "../api/ticketApi";
+import { ticketApi } from "../api/ticketAPI";
 import { facilityApi } from "../api/facilityApi";
 
 export default function NewTicketPage() {
