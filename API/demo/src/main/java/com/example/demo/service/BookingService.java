@@ -311,6 +311,14 @@ public class BookingService {
         return bookingRepository.count();
     }
 
+    public long countByUser(String userId) {
+        return bookingRepository.countByUserId(userId);
+    }
+
+    public long countByUserAndStatus(String userId, BookingStatus status) {
+        return bookingRepository.countByUserIdAndStatus(userId, status);
+    }
+
     public List<BookingResponse> getBookingsByFacilityAndDate(String facilityId, LocalDate date) {
         return bookingRepository.findByFacilityIdAndDateOrderByStartTimeAsc(facilityId, date)
                 .stream().map(BookingResponse::fromEntity).toList();

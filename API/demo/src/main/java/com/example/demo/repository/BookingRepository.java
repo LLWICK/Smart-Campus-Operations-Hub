@@ -38,5 +38,9 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
 
     long countByStatus(BookingStatus status);
 
+    long countByUserId(String userId);
+
+    long countByUserIdAndStatus(String userId, BookingStatus status);
+
     Optional<Booking> findByCheckInCode(String checkInCode);
 }
