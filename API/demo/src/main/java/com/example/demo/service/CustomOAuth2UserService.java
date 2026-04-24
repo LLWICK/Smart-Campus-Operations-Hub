@@ -69,7 +69,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // Return a customized OAuth2User that includes the Spring Security DB roles
-        // We use "sub" as the name attribute key because it's standard for Google
+        // Use "sub" as the name attribute key because it's standard for Google
         return new DefaultOAuth2User(authorities, oauth2User.getAttributes(), "sub");
     }
 }
