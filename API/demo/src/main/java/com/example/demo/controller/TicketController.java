@@ -81,4 +81,23 @@ public class TicketController {
             @PathVariable String techId) {
         return ResponseEntity.ok(ticketService.assignToTechnician(id, techId));
     }
+
+    @PatchMapping("/{id}/admin-response")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TicketResponse> updateAdminResponse(
+            @PathVariable String id,
+            @RequestBody String response) {
+        return ResponseEntity.ok(ticketService.updateAdminResponse(id, response));
+    }
+
+    // 2. Technician Technical Feedback
+    @PatchMapping("/{id}/tech-feedback")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<TicketResponse> updateTechFeedback(
+            @PathVariable String id,
+            @RequestBody String feedback,
+            @AuthenticationPrincipal OAuth2User oauthUser) {
+        User currentUser = currentUserService.requireUser(oauthUser);
+        return ResponseEntity.ok(ticketService.updateTechnicianFeedback(id, feedback, currentUser));
+    }
 }

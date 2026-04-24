@@ -29,6 +29,9 @@ public class TicketResponse {
     private String assignedToTechnicianId;
     private String resourceId;
 
+    private String adminResponse;
+    private String technicianFeedback;
+
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -40,6 +43,8 @@ public class TicketResponse {
                 .category(ticket.getCategory())
                 .priority(ticket.getPriority())
                 .status(ticket.getStatus())
+                .adminResponse(ticket.getAdminResponse())
+                .technicianFeedback(ticket.getTechnicianFeedback())
                 .raisedByUserId(ticket.getRaisedByUserId())
                 .assignedToTechnicianId(ticket.getAssignedToTechnicianId())
                 .resourceId(ticket.getResourceId())

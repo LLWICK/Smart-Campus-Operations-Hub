@@ -1,5 +1,6 @@
 import { Menu, User, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function Navbar({ onMenuClick }) {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ export default function Navbar({ onMenuClick }) {
       <div className="flex-1" />
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <NotificationDropdown />
         <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-gray-100">
           {user?.picture ? (
             <img
