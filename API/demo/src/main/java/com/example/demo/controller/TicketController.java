@@ -34,7 +34,7 @@ public class TicketController {
         User currentUser = currentUserService.requireUser(oauthUser);
         
         // 2. Set the ID manually in the request DTO before passing to service
-        // This ensures the ticket is ALWAYS linked to the person logged in
+        
         request.setRaisedByUserId(currentUser.getId());
         
         return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.createTicket(request));
@@ -65,7 +65,7 @@ public class TicketController {
     
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN', 'STUDENT', 'USER')")
     public ResponseEntity<TicketResponse> updateStatus(
             @PathVariable String id,
             @RequestParam TicketStatus status,
